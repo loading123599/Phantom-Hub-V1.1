@@ -1,6 +1,14 @@
-if game.CoreGui:FindFirstChild("SysBroker") then
-  game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Poison's System Broken",Text = "GUI Already loaded, rejoin to re-execute",Duration = 5;})
-  return
+local success, result = pcall(function()
+    return game:GetService("CoreGui"):FindFirstChild("SysBroker")
+end)
+
+if success and result then
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Poison's System Broken",
+        Text = "GUI Already loaded, rejoin to re-execute",
+        Duration = 5
+    })
+    return
 end
 local version = 2
 --VARIABLES
