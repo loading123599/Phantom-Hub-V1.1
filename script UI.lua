@@ -1,332 +1,413 @@
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))()
+-- Combined Mobile Buttons and Rayfield UI Script
 
-local Window = Rayfield:CreateWindow({
-   Name = "Poison's Hub ",
-   Icon = 0,
-   LoadingTitle = "Welcome. To Poison's Hub",
-   LoadingSubtitle = "by Alex and Co Dev & 9'9",
-   Theme = {
-           TextColor = Color3.fromRGB(0, 0, 0),
-           Background = Color3.fromRGB(5, 5, 5),
-           Topbar = Color3.fromRGB(138, 43, 226),
-           Shadow = Color3.fromRGB(138, 43, 226),
+-- First create the mobile buttons
+local function createMobileButtons()
+    -- Check if the user is on mobile
+    local UserInputService = game:GetService("UserInputService")
+    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
-           NotificationBackground = Color3.fromRGB(138, 43, 226),
-           NotificationActionsBackground = Color3.fromRGB(138, 43, 226),
+    -- Create the GUI
+    local MobileButtonsGui = Instance.new("ScreenGui")
+    MobileButtonsGui.Name = "MobileButtonsGui"
+    MobileButtonsGui.ResetOnSpawn = false
+    MobileButtonsGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-           TabBackground = Color3.fromRGB(138, 43, 226),
-           TabStroke = Color3.fromRGB(138, 43, 226),
-           TabBackgroundSelected = Color3.fromRGB(138, 43, 226),
-           TabTextColor = Color3.fromRGB(0, 0, 0),
+    -- Parent the GUI to the appropriate location
+    if game:GetService("RunService"):IsStudio() then
+        MobileButtonsGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    else
+        MobileButtonsGui.Parent = game.CoreGui
+    end
 
-           SelectedTabTextColor = Color3.fromRGB(255, 255, 255),
-           ElementBackground = Color3.fromRGB(138, 43, 226),
-           ElementBackgroundHover = Color3.fromRGB(138, 43, 226),
-           SecondaryElementBackground = Color3.fromRGB(138, 43, 226),
-           ElementStroke = Color3.fromRGB(0, 0, 0),
-           SecondaryElementStroke = Color3.fromRGB(138, 43, 226),
+    -- Only show for mobile users
+    if not isMobile then
+        -- Create a notification for non-mobile users
+        local notification = Instance.new("TextLabel")
+        notification.Size = UDim2.new(0, 200, 0, 50)
+        notification.Position = UDim2.new(0.5, -100, 0.1, 0)
+        notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        notification.BackgroundTransparency = 0.5
+        notification.TextColor3 = Color3.fromRGB(255, 255, 255)
+        notification.Text = "Mobile buttons only available on mobile devices"
+        notification.TextWrapped = true
+        notification.Parent = MobileButtonsGui
+        
+        -- Remove notification after 5 seconds
+        game:GetService("Debris"):AddItem(notification, 5)
+        return
+    end
 
-           SliderBackground = Color3.fromRGB(5, 5, 5),
-           SliderProgress = Color3.fromRGB(138, 43, 226),
-           SliderStroke = Color3.fromRGB(138, 43, 226),
+    -- Create the B button
+    local BButton = Instance.new("TextButton")
+    BButton.Name = "BButton"
+    BButton.Size = UDim2.new(0, 60, 0, 60)
+    BButton.Position = UDim2.new(0.8, 0, 0.6, 0)
+    BButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black background
+    BButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+    BButton.Text = "B"
+    BButton.TextSize = 24
+    BButton.Font = Enum.Font.GothamBold
+    BButton.Parent = MobileButtonsGui
 
-           ToggleBackground = Color3.fromRGB(138, 43, 226),
-           ToggleEnabled = Color3.fromRGB(138, 43, 226),
-           ToggleDisabled = Color3.fromRGB(0, 0, 0),
-           ToggleEnabledStroke = Color3.fromRGB(138, 43, 226),
-           ToggleDisabledStroke = Color3.fromRGB(0, 0, 0),
-           ToggleEnabledOuterStroke = Color3.fromRGB(138, 43, 226),
-           ToggleDisabledOuterStroke = Color3.fromRGB(138, 43, 226),
+    -- Create purple outline for B button
+    local BOutline = Instance.new("UIStroke")
+    BOutline.Color = Color3.fromRGB(128, 0, 128) -- Purple
+    BOutline.Thickness = 3
+    BOutline.Parent = BButton
 
-           DropdownSelected = Color3.fromRGB(5, 5, 5),
-           DropdownUnselected = Color3.fromRGB(0, 0, 0),
+    -- Round the corners
+    local BCorner = Instance.new("UICorner")
+    BCorner.CornerRadius = UDim.new(0.2, 0)
+    BCorner.Parent = BButton
 
-           InputBackground = Color3.fromRGB(0, 0, 0),
-           InputStroke = Color3.fromRGB(138, 43, 226),
-           PlaceholderColor = Color3.fromRGB(138, 43, 226)
+    -- Create the Z button
+    local ZButton = Instance.new("TextButton")
+    ZButton.Name = "ZButton"
+    ZButton.Size = UDim2.new(0, 60, 0, 60)
+    ZButton.Position = UDim2.new(0.65, 0, 0.6, 0)
+    ZButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black background
+    ZButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+    ZButton.Text = "Z"
+    ZButton.TextSize = 24
+    ZButton.Font = Enum.Font.GothamBold
+    ZButton.Parent = MobileButtonsGui
+
+    -- Create purple outline for Z button
+    local ZOutline = Instance.new("UIStroke")
+    ZOutline.Color = Color3.fromRGB(128, 0, 128) -- Purple
+    ZOutline.Thickness = 3
+    ZOutline.Parent = ZButton
+
+    -- Round the corners
+    local ZCorner = Instance.new("UICorner")
+    ZCorner.CornerRadius = UDim.new(0.2, 0)
+    ZCorner.Parent = ZButton
+
+    -- Create the toggle button
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Name = "ToggleButton"
+    ToggleButton.Size = UDim2.new(0, 40, 0, 40)
+    ToggleButton.Position = UDim2.new(0.9, 0, 0.1, 0)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black background
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+    ToggleButton.Text = "≡"
+    ToggleButton.TextSize = 24
+    ToggleButton.Font = Enum.Font.GothamBold
+    ToggleButton.Parent = MobileButtonsGui
+
+    -- Create purple outline for toggle button
+    local ToggleOutline = Instance.new("UIStroke")
+    ToggleOutline.Color = Color3.fromRGB(128, 0, 128) -- Purple
+    ToggleOutline.Thickness = 3
+    ToggleOutline.Parent = ToggleButton
+
+    -- Round the corners
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0.2, 0)
+    ToggleCorner.Parent = ToggleButton
+
+    -- Function to make a button draggable
+    local function makeDraggable(button)
+        local dragging = false
+        local dragInput
+        local dragStart
+        local startPos
+        
+        button.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                dragStart = input.Position
+                startPos = button.Position
+                
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end)
+        
+        button.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+                dragInput = input
+            end
+        end)
+        
+        UserInputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                local delta = input.Position - dragStart
+                button.Position = UDim2.new(
+                    startPos.X.Scale, 
+                    startPos.X.Offset + delta.X, 
+                    startPos.Y.Scale, 
+                    startPos.Y.Offset + delta.Y
+                )
+            end
+        end)
+    end
+
+    -- Make buttons draggable
+    makeDraggable(BButton)
+    makeDraggable(ZButton)
+    makeDraggable(ToggleButton)
+
+    -- Function to simulate key press
+    local function simulateKeyPress(keyCode)
+        -- Fire virtual input events
+        local vim = game:GetService("VirtualInputManager")
+        
+        -- Key down
+        vim:SendKeyEvent(true, keyCode, false, game)
+        
+        -- Small delay
+        wait(0.05)
+        
+        -- Key up
+        vim:SendKeyEvent(false, keyCode, false, game)
+    end
+
+    -- Connect button press events
+    BButton.MouseButton1Click:Connect(function()
+        simulateKeyPress(Enum.KeyCode.B)
+        
+        -- Visual feedback
+        BButton.BackgroundColor3 = Color3.fromRGB(128, 0, 128) -- Purple flash
+        wait(0.1)
+        BButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Back to black
+    end)
+
+    ZButton.MouseButton1Click:Connect(function()
+        simulateKeyPress(Enum.KeyCode.Z)
+        
+        -- Visual feedback
+        ZButton.BackgroundColor3 = Color3.fromRGB(128, 0, 128) -- Purple flash
+        wait(0.1)
+        ZButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Back to black
+    end)
+
+    -- Toggle button functionality
+    local buttonsVisible = true
+    ToggleButton.MouseButton1Click:Connect(function()
+        buttonsVisible = not buttonsVisible
+        
+        BButton.Visible = buttonsVisible
+        ZButton.Visible = buttonsVisible
+        
+        -- Visual feedback
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(128, 0, 128) -- Purple flash
+        wait(0.1)
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Back to black
+    end)
+
+    -- Notification that buttons are ready
+    local notification = Instance.new("TextLabel")
+    notification.Size = UDim2.new(0, 200, 0, 50)
+    notification.Position = UDim2.new(0.5, -100, 0.1, 0)
+    notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    notification.BackgroundTransparency = 0.5
+    notification.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notification.Text = "Mobile buttons loaded! Drag to reposition."
+    notification.TextWrapped = true
+    notification.Parent = MobileButtonsGui
+
+    -- Add purple outline to notification
+    local notifOutline = Instance.new("UIStroke")
+    notifOutline.Color = Color3.fromRGB(128, 0, 128) -- Purple
+    notifOutline.Thickness = 2
+    notifOutline.Parent = notification
+
+    -- Round the corners
+    local notifCorner = Instance.new("UICorner")
+    notifCorner.CornerRadius = UDim.new(0.2, 0)
+    notifCorner.Parent = notification
+
+    -- Remove notification after 5 seconds
+    game:GetService("Debris"):AddItem(notification, 5)
+
+    print("Mobile buttons loaded successfully!")
+end
+
+-- Create mobile buttons first
+createMobileButtons()
+
+-- Then load the Rayfield UI
+local function loadRayfieldUI()
+    print("Loading Rayfield UI...")
+    
+    local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))()
+
+    local Window = Rayfield:CreateWindow({
+       Name = "Poison's Hub ",
+       Icon = 0,
+       LoadingTitle = "Welcome. To Poison's Hub",
+       LoadingSubtitle = "by Alex and Co Dev & 9'9",
+       Theme = {
+               TextColor = Color3.fromRGB(0, 0, 0),
+               Background = Color3.fromRGB(5, 5, 5),
+               Topbar = Color3.fromRGB(138, 43, 226),
+               Shadow = Color3.fromRGB(138, 43, 226),
+
+               NotificationBackground = Color3.fromRGB(138, 43, 226),
+               NotificationActionsBackground = Color3.fromRGB(138, 43, 226),
+
+               TabBackground = Color3.fromRGB(138, 43, 226),
+               TabStroke = Color3.fromRGB(138, 43, 226),
+               TabBackgroundSelected = Color3.fromRGB(138, 43, 226),
+               TabTextColor = Color3.fromRGB(0, 0, 0),
+
+               SelectedTabTextColor = Color3.fromRGB(255, 255, 255),
+               ElementBackground = Color3.fromRGB(138, 43, 226),
+               ElementBackgroundHover = Color3.fromRGB(138, 43, 226),
+               SecondaryElementBackground = Color3.fromRGB(138, 43, 226),
+               ElementStroke = Color3.fromRGB(0, 0, 0),
+               SecondaryElementStroke = Color3.fromRGB(138, 43, 226),
+
+               SliderBackground = Color3.fromRGB(5, 5, 5),
+               SliderProgress = Color3.fromRGB(138, 43, 226),
+               SliderStroke = Color3.fromRGB(138, 43, 226),
+
+               ToggleBackground = Color3.fromRGB(138, 43, 226),
+               ToggleEnabled = Color3.fromRGB(138, 43, 226),
+               ToggleDisabled = Color3.fromRGB(0, 0, 0),
+               ToggleEnabledStroke = Color3.fromRGB(138, 43, 226),
+               ToggleDisabledStroke = Color3.fromRGB(0, 0, 0),
+               ToggleEnabledOuterStroke = Color3.fromRGB(138, 43, 226),
+               ToggleDisabledOuterStroke = Color3.fromRGB(138, 43, 226),
+
+               DropdownSelected = Color3.fromRGB(5, 5, 5),
+               DropdownUnselected = Color3.fromRGB(0, 0, 0),
+
+               InputBackground = Color3.fromRGB(0, 0, 0),
+               InputStroke = Color3.fromRGB(138, 43, 226),
+               PlaceholderColor = Color3.fromRGB(138, 43, 226)
+           },
+       DisableRayfieldPrompts = false,
+       DisableBuildWarnings = false,
+
+       ConfigurationSaving = {
+          Enabled = true,
+          FolderName = nil,
+          FileName = "Poison's Hub"
        },
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false,
 
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = nil,
-      FileName = "Poison's Hub"
-   },
+       Discord = {
+          Enabled = true, 
+          Invite = "nil", 
+          RememberJoins = false
+       },
 
-   Discord = {
-      Enabled = true, 
-      Invite = "nil", 
-      RememberJoins = false
-   },
+       KeySystem = true,
+       KeySettings = {
+          Title = "Enter Key Below",
+          Subtitle = "Key System",
+          Note = "key is poison", 
+          FileName = "Key", 
+          SaveKey = true,
+          GrabKeyFromSite = false,  
+          Key = {"poison"}
+       }
+    })
 
-   KeySystem = true,
-   KeySettings = {
-      Title = "Enter Key Below",
-      Subtitle = "Key System",
-      Note = "key is poison", 
-      FileName = "Key", 
-      SaveKey = true,
-      GrabKeyFromSite = false,  
-      Key = {"poison"}
-   }
-})
+    local Tab = Window:CreateTab("Main", "home")
+    local Slider = Tab:CreateSlider({
+       Name = "WalkSpeed",
+       Range = {0, 210},
+       Increment = 10,
+       Suffix = "speed",
+       CurrentValue = 10,
+       Flag = "speed",
+       Callback = function(Value)
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value    
+       end,
+    })
 
-local Tab = Window:CreateTab("Main", "home")
-local Slider = Tab:CreateSlider({
-   Name = "WalkSpeed",
-   Range = {0, 210},
-   Increment = 10,
-   Suffix = "speed",
-   CurrentValue = 10,
-   Flag = "speed",
-   Callback = function(Value)
-game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value    
-   end,
-})
+    local Divider = Tab:CreateDivider()
 
+    local Tab = Window:CreateTab("Universal", "rewind")
+    local Button = Tab:CreateButton({
+        Name = "Infinite Yield",
+        Callback = function()
+           loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+        end,
+    })
+    
+    local Button = Tab:CreateButton({
+        Name = "Vc Unban",
+        Callback = function()
+             loadstring(game:HttpGet("https://raw.githubusercontent.com/platinumicy/unsuspend/refs/heads/main/unsuspend"))()
+        end,
+    })
 
+    local Button = Tab:CreateButton({
+        Name = "Poison Hub (System Broken Remade)",
+        Callback = function()
+             loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/Custom%20System%20Broken"))()
+        end,
+    })
 
-local Divider = Tab:CreateDivider()
+    local Button = Tab:CreateButton({
+        Name = "Flash Step",
+        Callback = function()
+             loadstring(game:HttpGet("https://raw.githubusercontent.com/0Ben1/fe/main/obf_11l7Y131YqJjZ31QmV5L8pI23V02b3191sEg26E75472Wl78Vi8870jRv5txZyL1.lua.txt"))()
+        end,
+    })
 
-local Tab = Window:CreateTab("Universal", "rewind")
-local Button = Tab:CreateButton({
-Name = "Infinite Yield",
-Callback = function()
-   loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
-end,
-})
-local Button = Tab:CreateButton({
-Name = "Vc Unban",
-Callback = function()
-         loadstring(game:HttpGet("https://raw.githubusercontent.com/platinumicy/unsuspend/refs/heads/main/unsuspend"))()
-end,
-})
+    local Button = Tab:CreateButton({
+        Name = "Jerk Off Tool",
+        Callback = function()
+             loadstring(game:HttpGet("https://pastefy.app/YZoglOyJ/raw"))()
+        end,
+    })
+    
+    local Button = Tab:CreateButton({
+        Name = "Face Fuck",
+        Callback = function()
+             loadstring(game:HttpGet('https://raw.githubusercontent.com/EnterpriseExperience/bruhlolw/refs/heads/main/face_bang_script.lua'))()
+        end,
+    })
 
-local Button = Tab:CreateButton({
-Name = "Poison Hub (System Broken Remade)",
-Callback = function()
-         loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/Custom%20System%20Broken"))()
-end,
-})
+    local Button = Tab:CreateButton({
+        Name = "Tp Tool",
+        Callback = function()
+            local player = game.Players.LocalPlayer 
+            local mouse = player:GetMouse() 
 
-local Button = Tab:CreateButton({
-Name = "Flash Step",
-Callback = function()
-         loadstring(game:HttpGet("https://raw.githubusercontent.com/0Ben1/fe/main/obf_11l7Y131YqJjZ31QmV5L8pI23V02b3191sEg26E75472Wl78Vi8870jRv5txZyL1.lua.txt"))()
-end,
-})
+            local tool = Instance.new("Tool") 
+            tool.Name = "Teleport Tool" 
+            tool.RequiresHandle = false 
+            tool.Parent = player.Backpack 
 
-local Button = Tab:CreateButton({
-Name = "Jerk Off Tool",
-Callback = function()
-         loadstring(game:HttpGet("https://pastefy.app/YZoglOyJ/raw"))()
-end,
-})
-   local Button = Tab:CreateButton({
-Name = "Face Fuck",
-Callback = function()
-         loadstring(game:HttpGet('https://raw.githubusercontent.com/EnterpriseExperience/bruhlolw/refs/heads/main/face_bang_script.lua'))()
-end,
-})
+            local function teleportToClick() 
+                local character = player.Character or player.CharacterAdded:Wait() 
+                local rootPart = character:FindFirstChild("HumanoidRootPart") 
 
-         local Button = Tab:CreateButton({
-            Name = "Tp Tool",
-            Callback = function()
-     local player = game.Players.LocalPlayer 
-     local mouse = player:GetMouse() 
+                if rootPart and mouse.Target then 
+                    local targetPosition = mouse.Hit.Position 
+                    rootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 3, 0)) 
+                end
+            end
 
-     local tool = Instance.new("Tool") 
-     tool.Name = "Teleport Tool" 
-     tool.RequiresHandle = false 
-     tool.Parent = player.Backpack 
+            tool.Activated:Connect(teleportToClick) 
+        end 
+    }) 
 
-     local function teleportToClick() 
-         local character = player.Character or player.CharacterAdded:Wait() 
-         local rootPart = character:FindFirstChild("HumanoidRootPart") 
+    local Divider = Tab:CreateDivider()
 
-         if rootPart and mouse.Target then 
-             local targetPosition = mouse.Hit.Position 
-             rootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 3, 0)) 
-         end
-     end
+    local Tab = Window:CreateTab("Visuals", "eye")
+    local Divider = Tab:CreateDivider()
 
-     tool.Activated:Connect(teleportToClick) 
- end 
-}) 
+    local Tab = Window:CreateTab("ReAnimation", "user")
+    local Divider = Tab:CreateDivider()
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
+    local Tab = Window:CreateTab("Settings", "settings")
+    local Divider = Tab:CreateDivider()
 
-local TeleportEnabled = false
-local PhaseEnabled = false
-local PointTeleportIndicatorEnabled = true
-local TeleportIndicator = nil
-local PhaseObjects = {}
-local TeleportConnection = nil
+    local Tab = Window:CreateTab("Copy Animation", "pen")
+    local Divider = Tab:CreateDivider()
+    
+    print("Rayfield UI loaded successfully!")
+end
 
-local function CreateTeleportIndicator()
- local indicator = Instance.new("Part")
- indicator.Name = "TeleportIndicator"
- indicator.Anchored = true
- indicator.CanCollide = false
- indicator.Size = Vector3.new(1, 0.1, 1)
- indicator.Transparency = 1
- indicator.Parent = workspace
-
- local surfaceGui = Instance.new("SurfaceGui")
- surfaceGui.Face = Enum.NormalId.Top
- surfaceGui.AlwaysOnTop = false
- surfaceGui.LightInfluence = 0
- surfaceGui.Parent = indicator
-
-     local function createRipple()
-         local ripple = Instance.new("Frame")
-         ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-         ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
-         ripple.Size = UDim2.new(0, 100, 0, 100)
-         ripple.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-         ripple.BackgroundTransparency = 0.2
-         ripple.BorderSizePixel = 0
-         ripple.ZIndex = 10
-         ripple.Parent = surfaceGui
-
-         local uiCorner = Instance.new("UICorner", ripple)
-         uiCorner.CornerRadius = UDim.new(1, 0)
-
-         local TweenService = game:GetService("TweenService")
-         local info = TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-         local tween = TweenService:Create(ripple, info, {
-             Size = UDim2.new(3, 0, 3, 0),
-             BackgroundTransparency = 1
-         })
-         tween:Play()
-
-         tween.Completed:Connect(function()
-             ripple:Destroy()
-         end)
-     end
-
-     task.spawn(function()
-         while indicator and indicator.Parent do
-             createRipple()
-             task.wait(0.6)
-         end
-     end)
-
-     return indicator
- end
-
- local RunService = game:GetService("RunService")
- local LocalPlayer = game.Players.LocalPlayer
- local Mouse = LocalPlayer:GetMouse()
-
-
- local TeleportEnabled = false
- local TeleportConnection = nil
- local TeleportIndicator = nil
- local PhaseObjects = {} 
- local PointTeleportIndicatorEnabled = true 
-
- local function CreateTeleportIndicator()
-     local indicator = Instance.new("Part")
-     indicator.Size = Vector3.new(2, 0.2, 2)
-     indicator.Anchored = true
-     indicator.CanCollide = false
-     indicator.Transparency = 0.5
-     indicator.BrickColor = BrickColor.new("Bright blue")
-     indicator.Parent = workspace
-     return indicator
- end
-
- local Toggle = Tab1:CreateToggle({
-     Name = "Point Teleport",
-     Default = false,
-     Description = "Click anywhere to teleport there.",
-     Callback = function(enabled)
-         TeleportEnabled = enabled
-
-         if enabled then
-             for _, PhaseObj in pairs(PhaseObjects) do
-                 if PhaseObj:FindFirstChild("PhaseHighlight") then
-                     PhaseObj.PhaseHighlight:Destroy()
-                     PhaseObj.CanCollide = true
-                 end
-             end
-
-             if PointTeleportIndicatorEnabled and not TeleportIndicator then
-                 TeleportIndicator = CreateTeleportIndicator()
-             end
-
-             Mouse.TargetFilter = TeleportIndicator
-             RunService:BindToRenderStep("TeleportIndicatorUpdate", Enum.RenderPriority.Last.Value, function()
-                 if TeleportIndicator and TeleportEnabled then
-                     local ray = workspace:Raycast(Mouse.UnitRay.Origin, Mouse.UnitRay.Direction * 500, RaycastParams.new())
-                     if ray and ray.Position then
-                         TeleportIndicator.Position = ray.Position
-                     end
-                 end
-             end)
-
-             TeleportConnection = Mouse.Button1Down:Connect(function()
-                 if not TeleportEnabled then return end
-                 local ray = workspace:Raycast(Mouse.UnitRay.Origin, Mouse.UnitRay.Direction * 500, RaycastParams.new())
-                 if ray and ray.Position then
-                     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-                     local hrp = char:FindFirstChild("HumanoidRootPart")
-                     if hrp then
-                         hrp.CFrame = CFrame.new(ray.Position + Vector3.new(0, 5, 0)) -- Slightly above the ground
-                     end
-                 end
-             end)
-
-             print("Teleport Enabled!")
-         else
-             TeleportEnabled = false
-
-             if TeleportConnection then
-                 TeleportConnection:Disconnect()
-                 TeleportConnection = nil
-             end
-
-             RunService:UnbindFromRenderStep("TeleportIndicatorUpdate")
-
-             if TeleportIndicator then
-                 TeleportIndicator:Destroy()
-                 TeleportIndicator = nil
-             end
-
-             Mouse.TargetFilter = nil
-
-             print("Teleport Disabled!")
-         end
-   end,
-}) 
-
-local Divider = Tab:CreateDivider()
-
-local Tab = Window:CreateTab("Visuals", "eye")
-
-
-
-local Divider = Tab:CreateDivider()
-
-local Tab = Window:CreateTab("ReAnimation", "user")
-
-
-
-local Divider = Tab:CreateDivider()
-
-local Tab = Window:CreateTab("Settings", "settings")
-
-
-
-local Divider = Tab:CreateDivider()
-
-local Tab = Window:CreateTab("Copy Animation", "pen")
-
-
-
-local Divider = Tab:CreateDivider()
+-- Wait a short moment before loading Rayfield UI to ensure mobile buttons are set up
+wait(1)
+loadRayfieldUI()
