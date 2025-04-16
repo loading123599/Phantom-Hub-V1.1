@@ -123,6 +123,12 @@ Callback = function()
          loadstring(game:HttpGet("https://pastefy.app/YZoglOyJ/raw"))()
 end,
 })
+   local Button = Tab:CreateButton({
+Name = "Face Fuck",
+Callback = function()
+         loadstring(game:HttpGet('https://raw.githubusercontent.com/EnterpriseExperience/bruhlolw/refs/heads/main/face_bang_script.lua'))()
+end,
+})
 
          local Button = Tab:CreateButton({
             Name = "Tp Tool",
