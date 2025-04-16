@@ -1954,7 +1954,7 @@ Credits_Button.MouseButton1Click:Connect(function()
     Credits_Section.Visible = true
 end)
 
--- Functionality for the Infinite Yield button in the Misc section
+-- Find the InfYield_Button in the Misc_Section and update its callback
 InfYield_Button.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
 end)
