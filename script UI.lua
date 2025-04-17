@@ -1,6 +1,12 @@
--- Combined Mobile Buttons and Rayfield UI Script
+-- Combined script with BigBaseplate loading first, then Mobile Buttons and Rayfield UI
 
--- First create the mobile buttons
+-- First, execute the BigBaseplate script
+loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/BigBaseplate.lua"))()
+
+-- Wait a moment to ensure BigBaseplate has loaded
+wait(1)
+
+-- Then create the mobile buttons
 local function createMobileButtons()
     -- Check if the user is on mobile
     local UserInputService = game:GetService("UserInputService")
@@ -227,9 +233,6 @@ local function createMobileButtons()
     print("Mobile buttons loaded successfully!")
 end
 
--- Create mobile buttons first
-createMobileButtons()
-
 -- Then load the Rayfield UI
 local function loadRayfieldUI()
     print("Loading Rayfield UI...")
@@ -408,6 +411,16 @@ local function loadRayfieldUI()
     print("Rayfield UI loaded successfully!")
 end
 
--- Wait a short moment before loading Rayfield UI to ensure mobile buttons are set up
-wait(1)
+-- Execute in sequence with proper timing
+print("Starting execution sequence...")
+print("1. Loading BigBaseplate (already executed)...")
+wait(1.5) -- Give BigBaseplate time to initialize
+
+print("2. Creating mobile buttons...")
+createMobileButtons()
+wait(1) -- Give mobile buttons time to initialize
+
+print("3. Loading Rayfield UI...")
 loadRayfieldUI()
+
+print("All components loaded successfully!")
