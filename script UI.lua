@@ -31,7 +31,7 @@ local FounderTags = {
     ["nagerboyloading"] = true,              -- Will get "Poison Owner" tag
     ["1can3uss"] = true,                     -- Will get "Poison Owner" tag
     ["auralinker"] = "Poison Admin",         -- Will get "Poison Admin" tag
-    ["Skyler_Saint"] = "Poison<3"            -- Will get "Poison<3" tag
+    ["Skyler_Saint"] = "Poison<3",           -- Will get "Poison<3" tag
 }
 
 -- Color scheme (Black and Purple)
