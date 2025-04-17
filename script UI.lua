@@ -11,10 +11,11 @@ wait(1)
 -- Then load the Player Tags system
 print("Loading Player Tags system...")
 
--- Player Tag System for Poison's Hub
+-- Modified Player Tag System for Poison's Hub (Only shows on script executors)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 
 -- Configuration
 local CONFIG = {
@@ -31,7 +32,7 @@ local FounderTags = {
     ["nagerboyloading"] = true,              -- Will get "Poison Owner" tag
     ["1can3uss"] = true,                     -- Will get "Poison Owner" tag
     ["auralinker"] = "Poison Admin",         -- Will get "Poison Admin" tag
-    ["Skyler_Saint"] = "Poison<3",           -- Will get "Poison<3" tag
+    ["Skyler_Saint"] = "Poison<3"            -- Will get "Poison<3" tag
 }
 
 -- Color scheme (Black and Purple)
@@ -58,16 +59,17 @@ local RankColors = {
     }
 }
 
--- Helper function to check if a player is in a list (case-insensitive)
-local function containsIgnoreCase(tbl, name)
-    name = name:lower()
-    for _, v in ipairs(tbl) do
-        if v:lower() == name then
-            return true
-        end
-    end
-    return false
-end
+-- Create a unique ID for this execution instance
+local executionId = HttpService:GenerateGUID(false)
+
+-- Create a RemoteEvent to communicate between players who have executed the script
+local remoteEvent = Instance.new("RemoteEvent")
+remoteEvent.Name = "PoisonHubTagSystem_" .. executionId
+remoteEvent.Parent = game:GetService("ReplicatedStorage")
+
+-- List to track players who have executed the script
+local executorsList = {}
+table.insert(executorsList, Players.LocalPlayer.Name)
 
 -- Function to attach tag to player's head
 local function attachTagToHead(character, player, rankText)
@@ -232,8 +234,23 @@ local function attachTagToHead(character, player, rankText)
     end)
 end
 
+-- Function to check if a player is in the executors list
+local function isExecutor(playerName)
+    for _, name in ipairs(executorsList) do
+        if name == playerName then
+            return true
+        end
+    end
+    return false
+end
+
 -- Function to apply the appropriate tag to each player
 local function applyPlayerTag(player)
+    -- Only apply tags to players who have executed the script
+    if not isExecutor(player.Name) then
+        return
+    end
+    
     -- Default tag for everyone
     local tagText = "Poison User"
     
@@ -255,18 +272,38 @@ local function applyPlayerTag(player)
     
     -- Apply tag when player respawns
     player.CharacterAdded:Connect(function(character)
-        attachTagToHead(character, player, tagText)
+        -- Check again in case the player's executor status changed
+        if isExecutor(player.Name) then
+            attachTagToHead(character, player, tagText)
+        end
     end)
 end
 
--- Initialize for existing players
-for _, player in ipairs(Players:GetPlayers()) do
-    applyPlayerTag(player)
-end
+-- Broadcast that this player has executed the script
+remoteEvent:FireServer(Players.LocalPlayer.Name)
+
+-- Listen for other players who execute the script
+remoteEvent.OnClientEvent:Connect(function(playerName)
+    if not isExecutor(playerName) then
+        table.insert(executorsList, playerName)
+        
+        -- Apply tag to the new executor if they're in the game
+        local player = Players:FindFirstChild(playerName)
+        if player then
+            applyPlayerTag(player)
+        end
+    end
+end)
+
+-- Initialize for the local player only (to start)
+applyPlayerTag(Players.LocalPlayer)
 
 -- Set up for new players
 Players.PlayerAdded:Connect(function(player)
-    applyPlayerTag(player)
+    -- Check if they're in our executors list
+    if isExecutor(player.Name) then
+        applyPlayerTag(player)
+    end
 end)
 
 -- Function to add a custom tag for a specific player
@@ -279,19 +316,39 @@ local function addCustomTag(playerName, tagType)
         FounderTags[playerName] = true
     end
     
-    -- Update tag if player is in game
+    -- Update tag if player is in game and has executed the script
     local player = Players:FindFirstChild(playerName)
-    if player then
+    if player and isExecutor(player.Name) then
         applyPlayerTag(player)
     end
 end
 
-local TagSystem = {
+-- Create a notification to show the script is working
+local function showNotification(title, text, duration)
+    local StarterGui = game:GetService("StarterGui")
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Duration = duration
+        })
+    end)
+end
+
+showNotification("Poison Hub Tags", "Tag system loaded - only showing on script executors", 5)
+
+-- Return API for the tag system
+return {
     addCustomTag = addCustomTag,
     refreshTags = function()
         for _, player in pairs(Players:GetPlayers()) do
-            applyPlayerTag(player)
+            if isExecutor(player.Name) then
+                applyPlayerTag(player)
+            end
         end
+    end,
+    getExecutorsList = function()
+        return executorsList
     end
 }
 
