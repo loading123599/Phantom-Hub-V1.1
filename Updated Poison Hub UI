@@ -300,11 +300,11 @@ local function loadRayfieldUI()
        KeySettings = {
           Title = "Enter Key Below",
           Subtitle = "Key System",
-          Note = "key is poison", 
+          Note = "key is roadto100members", 
           FileName = "Key", 
           SaveKey = true,
           GrabKeyFromSite = false,  
-          Key = {"poison"}
+          Key = {"roadto100members"}
        }
     })
       
