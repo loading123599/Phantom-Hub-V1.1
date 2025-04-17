@@ -1,6 +1,309 @@
--- Combined Mobile Buttons and Rayfield UI Script
+-- Combined Script for Poison's Hub with BigBaseplate loading first
 
--- First create the mobile buttons
+-- First, load the BigBaseplate
+print("Loading BigBaseplate...")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/BigBaseplate.lua"))()
+print("BigBaseplate loaded successfully!")
+
+-- Wait to ensure BigBaseplate is fully loaded
+wait(1)
+
+-- Then load the Player Tags system
+print("Loading Player Tags system...")
+
+-- Player Tag System for Poison's Hub
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+-- Configuration
+local CONFIG = {
+    TAG_SIZE = UDim2.new(0, 120, 0, 40),
+    TAG_OFFSET = Vector3.new(0, 2.4, 0),
+    MAX_DISTANCE = 100,
+    SCALE_DISTANCE = 50
+}
+
+-- Define founders/owners with their custom tags
+local FounderTags = {
+    ["Goodhelper12345"] = true,              -- Will get "Poison Owner" tag
+    ["karez6"] = true,                       -- Will get "Poison Owner" tag
+    ["nagerboyloading"] = true,              -- Will get "Poison Owner" tag
+    ["1can3uss"] = true,                     -- Will get "Poison Owner" tag
+    ["auralinker"] = "Poison Admin",         -- Will get "Poison Admin" tag
+    ["Skyler_Saint"] = "Poison<3"            -- Will get "Poison<3" tag
+}
+
+-- Color scheme (Black and Purple)
+local RankColors = {
+    ["Poison Owner"] = {
+        primary = Color3.fromRGB(20, 20, 20),   -- Black background
+        accent = Color3.fromRGB(138, 43, 226)   -- Purple accent
+    },
+    ["Poison User"] = {
+        primary = Color3.fromRGB(20, 20, 20),   -- Black background
+        accent = Color3.fromRGB(128, 0, 128)    -- Darker Purple accent
+    },
+    ["Poison Admin"] = {
+        primary = Color3.fromRGB(20, 20, 20),   -- Black background
+        accent = Color3.fromRGB(255, 0, 0)      -- Red accent
+    },
+    ["Poison VIP"] = {
+        primary = Color3.fromRGB(20, 20, 20),   -- Black background
+        accent = Color3.fromRGB(255, 215, 0)    -- Gold accent
+    },
+    ["Poison<3"] = {
+        primary = Color3.fromRGB(20, 20, 20),   -- Black background
+        accent = Color3.fromRGB(255, 105, 180)  -- Pink accent
+    }
+}
+
+-- Helper function to check if a player is in a list (case-insensitive)
+local function containsIgnoreCase(tbl, name)
+    name = name:lower()
+    for _, v in ipairs(tbl) do
+        if v:lower() == name then
+            return true
+        end
+    end
+    return false
+end
+
+-- Function to attach tag to player's head
+local function attachTagToHead(character, player, rankText)
+    local head = character:WaitForChild("Head", 5)
+    if not head then return end
+
+    -- Remove existing tag if present
+    local existingTag = head:FindFirstChild("PoisonTag")
+    if existingTag then existingTag:Destroy() end
+
+    -- Create new tag
+    local tag = Instance.new("BillboardGui")
+    tag.Adornee = head
+    tag.Active = true
+    tag.Name = "PoisonTag"
+    tag.Size = CONFIG.TAG_SIZE
+    tag.StudsOffset = CONFIG.TAG_OFFSET
+    tag.AlwaysOnTop = true
+    tag.MaxDistance = CONFIG.MAX_DISTANCE
+
+    -- Main container
+    local container = Instance.new("TextButton")
+    container.Size = UDim2.new(1, 0, 1, 0)
+    container.BackgroundTransparency = 0.2
+    container.BackgroundColor3 = RankColors[rankText].primary
+    container.BorderSizePixel = 0
+    container.Text = ""
+    container.Parent = tag
+
+    -- Add emoji icon
+    local emoji = Instance.new("TextLabel")
+    emoji.Size = UDim2.new(1, 0, 0.5, 0)
+    emoji.Position = UDim2.new(0, 0, -0.45, 0)
+    emoji.BackgroundTransparency = 1
+    emoji.TextSize = 25
+    emoji.TextColor3 = RankColors[rankText].accent
+    emoji.Font = Enum.Font.SourceSans
+    
+    -- Set emoji based on rank
+    if rankText == "Poison Owner" then
+        emoji.Text = "👑" -- Crown emoji for owners
+    elseif rankText == "Poison Admin" then
+        emoji.Text = "⚡" -- Lightning emoji for admins
+    elseif rankText == "Poison<3" then
+        emoji.Text = "❤" -- Heart emoji for Poison
+    else
+        emoji.Text = "☠️" -- Poison symbol for regular users
+    end
+    
+    emoji.Parent = container
+
+    -- Animate emoji with heartbeat effect
+    local heartbeatTweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+    local heartbeatTween = TweenService:Create(emoji, heartbeatTweenInfo, {TextSize = 20})
+    heartbeatTween:Play()
+
+    -- Rounded corners
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0.2, 0)
+    corner.Parent = container
+
+    -- Accent bar
+    local accent = Instance.new("Frame")
+    accent.Size = UDim2.new(0.7, 0, 0, 2.5)
+    accent.Position = UDim2.new(0.5, 0, 0, 0)
+    accent.BackgroundColor3 = RankColors[rankText].accent
+    accent.BorderSizePixel = 0
+    accent.Parent = container
+
+    local accentCorner = Instance.new("UICorner")
+    accentCorner.CornerRadius = UDim.new(0, 2)
+    accentCorner.Parent = accent
+
+    accent.AnchorPoint = Vector2.new(0.5, 0.5)
+    accent.Position = UDim2.new(0.5, 0, 0, 0)
+
+    -- Animate accent bar
+    local tweenInfoAccent = TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+    local tweenAccent = TweenService:Create(accent, tweenInfoAccent, {Size = UDim2.new(0.1, 0, 0, 2.5)})
+    tweenAccent:Play()
+
+    -- Rank text
+    local rankLabel = Instance.new("TextLabel")
+    rankLabel.Size = UDim2.new(1, 0, 0.6, 0)
+    rankLabel.Position = UDim2.new(0, 0, 0.1, 0)
+    rankLabel.BackgroundTransparency = 1
+    rankLabel.Text = rankText
+    rankLabel.TextColor3 = Color3.new(1, 1, 1)
+    rankLabel.TextSize = 17
+    rankLabel.Font = Enum.Font.SourceSansBold
+    rankLabel.Parent = container
+
+    -- Dynamic text sizing based on distance
+    local maxDistance = 50
+    local minSize = 8
+    local maxSize = 17
+
+    RunService.Heartbeat:Connect(function()
+        local localPlayer = Players.LocalPlayer
+        local localPlayerHead = localPlayer.Character and localPlayer.Character:WaitForChild("Head")
+        if localPlayer and localPlayerHead and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local targetHumanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            if targetHumanoidRootPart then
+                local distance = (localPlayerHead.Position - targetHumanoidRootPart.Position).Magnitude
+                local newSize = math.clamp(maxSize - ((distance / maxDistance) * (maxSize - minSize)), minSize, maxSize)
+                rankLabel.TextSize = newSize
+            end
+        end
+    end)
+
+    -- Username text
+    local userLabel = Instance.new("TextLabel")
+    userLabel.Size = UDim2.new(1, 0, 0.4, 0)
+    userLabel.Position = UDim2.new(0, 0, 0.6, 0)
+    userLabel.BackgroundTransparency = 1
+    userLabel.Text = "@" .. player.Name
+    userLabel.TextColor3 = RankColors[rankText].accent
+    userLabel.TextSize = 8
+    userLabel.Font = Enum.Font.GothamBold
+    userLabel.Parent = container
+
+    -- Add tag to player
+    tag.Parent = head
+
+    -- Hide username at distance
+    local playerHead = player.Character:WaitForChild("Head")
+    local humanoidRootPart = player.Character:WaitForChild("HumanoidRootPart")
+    RunService.Heartbeat:Connect(function()
+        local localPlayer = Players.LocalPlayer
+        local localPlayerHead = localPlayer.Character and localPlayer.Character:WaitForChild("Head")
+        if localPlayer and localPlayerHead and player.Character and playerHead and humanoidRootPart then
+            local distance = (localPlayerHead.Position - humanoidRootPart.Position).Magnitude
+            userLabel.Visible = distance <= maxDistance
+        end
+    end)
+
+    -- Scale tag based on distance
+    local connection = RunService.Heartbeat:Connect(function()
+        if not (character and character:FindFirstChild("Head") and Players.LocalPlayer.Character) then return end
+        local localCharacter = Players.LocalPlayer.Character
+        local localHead = localCharacter:FindFirstChild("Head")
+        if not localHead then return end
+        local distance = (head.Position - localHead.Position).Magnitude
+        tag.Size = UDim2.new(0, CONFIG.TAG_SIZE.X.Offset * math.clamp(1 - (distance / CONFIG.SCALE_DISTANCE), 0.5, 2), 
+                             0, CONFIG.TAG_SIZE.Y.Offset * math.clamp(1 - (distance / CONFIG.SCALE_DISTANCE), 0.5, 2))
+    end)
+
+    -- Clean up connection when tag is removed
+    tag.AncestryChanged:Connect(function(_, parent)
+        if not parent then
+            connection:Disconnect()
+        end
+    end)
+
+    -- Hover effects
+    container.MouseEnter:Connect(function()
+        TweenService:Create(container, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
+    end)
+
+    container.MouseLeave:Connect(function()
+        TweenService:Create(container, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
+    end)
+end
+
+-- Function to apply the appropriate tag to each player
+local function applyPlayerTag(player)
+    -- Default tag for everyone
+    local tagText = "Poison User"
+    
+    -- Check if player is in the FounderTags list
+    if FounderTags[player.Name] then
+        -- If the value is a string, use that as the custom tag
+        if type(FounderTags[player.Name]) == "string" then
+            tagText = FounderTags[player.Name]
+        else
+            -- Otherwise use the default owner tag
+            tagText = "Poison Owner"
+        end
+    end
+    
+    -- Apply the tag to the player
+    if player.Character then
+        attachTagToHead(player.Character, player, tagText)
+    end
+    
+    -- Apply tag when player respawns
+    player.CharacterAdded:Connect(function(character)
+        attachTagToHead(character, player, tagText)
+    end)
+end
+
+-- Initialize for existing players
+for _, player in ipairs(Players:GetPlayers()) do
+    applyPlayerTag(player)
+end
+
+-- Set up for new players
+Players.PlayerAdded:Connect(function(player)
+    applyPlayerTag(player)
+end)
+
+-- Function to add a custom tag for a specific player
+local function addCustomTag(playerName, tagType)
+    if tagType then
+        -- Add with custom tag type
+        FounderTags[playerName] = tagType
+    else
+        -- Add as regular owner
+        FounderTags[playerName] = true
+    end
+    
+    -- Update tag if player is in game
+    local player = Players:FindFirstChild(playerName)
+    if player then
+        applyPlayerTag(player)
+    end
+end
+
+local TagSystem = {
+    addCustomTag = addCustomTag,
+    refreshTags = function()
+        for _, player in pairs(Players:GetPlayers()) do
+            applyPlayerTag(player)
+        end
+    end
+}
+
+print("Player Tags system loaded successfully!")
+
+-- Wait to ensure Player Tags are fully loaded
+wait(1)
+
+-- Finally, load the Mobile Buttons and Rayfield UI
+print("Loading Mobile Buttons and Rayfield UI...")
+
+-- Create the mobile buttons
 local function createMobileButtons()
     -- Check if the user is on mobile
     local UserInputService = game:GetService("UserInputService")
@@ -66,7 +369,7 @@ local function createMobileButtons()
     ZButton.Size = UDim2.new(0, 60, 0, 60)
     ZButton.Position = UDim2.new(0.65, 0, 0.6, 0)
     ZButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black background
-    ZButton.TextColor3 = Color3.fromRGB(999, 999, 999) -- White text
+    ZButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
     ZButton.Text = "Z"
     ZButton.TextSize = 24
     ZButton.Font = Enum.Font.GothamBold
@@ -227,10 +530,13 @@ local function createMobileButtons()
     print("Mobile buttons loaded successfully!")
 end
 
--- Create mobile buttons first
+-- Create mobile buttons
 createMobileButtons()
 
--- Then load the Rayfield UI
+-- Wait to ensure mobile buttons are fully loaded
+wait(1)
+
+-- Load the Rayfield UI
 local function loadRayfieldUI()
     print("Loading Poison's Hub...")
     
@@ -487,7 +793,7 @@ local Toggle = Tab:CreateToggle({
     local Button = Tab:CreateButton({
         Name = "RTX shaders",
         Callback = function()
-loadstring(game:HttpGet('https://raw.githubusercontent.com/randomstring0/pshade-ultimate/refs/heads/main/src/cd.lua'))()
+            loadstring(game:HttpGet('https://raw.githubusercontent.com/randomstring0/pshade-ultimate/refs/heads/main/src/cd.lua'))()
         end,
     })
     
@@ -505,3 +811,5 @@ end
 -- Wait a short moment before loading Rayfield UI to ensure mobile buttons are set up
 wait(1)
 loadRayfieldUI()
+
+print("All components loaded successfully!")
