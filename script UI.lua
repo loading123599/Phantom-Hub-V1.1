@@ -27,7 +27,7 @@ local CONFIG = {
 
 -- Define founders/owners with their custom tags
 local FounderTags = {
-    ["Goodhelper12345"] = true,              -- Will get "Poison Owner" tag
+    ["GoodHelper12345"] = true,              -- Will get "Poison Owner" tag
     ["karez6"] = true,                       -- Will get "Poison Owner" tag
     ["nagerboyloading"] = true,              -- Will get "Poison Owner" tag
     ["1can3uss"] = true,                     -- Will get "Poison Owner" tag
@@ -869,54 +869,9 @@ local Toggle = Tab:CreateToggle({
             end,
         })
         
-        local Input = TagsTab:CreateInput({
-            Name = "Add Owner Tag",
-            PlaceholderText = "Enter username",
-            RemoveTextAfterFocusLost = true,
-            Callback = function(Text)
-                if Text and Text ~= "" then
-                    TagSystem.addCustomTag(Text)
-                    Rayfield:Notify({
-                        Title = "Tag Added",
-                        Content = "Added owner tag for " .. Text,
-                        Duration = 3,
-                    })
-                end
-            end,
-        })
-        
-        local Input = TagsTab:CreateInput({
-            Name = "Add Custom Tag",
-            PlaceholderText = "Username,TagType (e.g. Player,Poison VIP)",
-            RemoveTextAfterFocusLost = true,
-            Callback = function(Text)
-                if Text and Text ~= "" then
-                    local split = string.split(Text, ",")
-                    if #split == 2 then
-                        local username = split[1]
-                        local tagType = split[2]
-                        TagSystem.addCustomTag(username, tagType)
-                        Rayfield:Notify({
-                            Title = "Custom Tag Added",
-                            Content = "Added " .. tagType .. " tag for " .. username,
-                            Duration = 3,
-                        })
-                    else
-                        Rayfield:Notify({
-                            Title = "Error",
-                            Content = "Format should be: Username,TagType",
-                            Duration = 3,
-                        })
-                    end
-                end
-            end,
-        })
-        
-        local Divider = TagsTab:CreateDivider()
-        
         local Paragraph = TagsTab:CreateParagraph({
             Title = "Player Tag Instructions",
-            Content = "• Regular players get 'Poison User' tag\n• Owners get 'Poison Owner' tag\n• Custom tags can be added using the input above\n• Format for custom tags: Username,TagType\n• Available tag types: Poison Owner, Poison Admin, Poison VIP, Poison<3"
+            Content = "• Regular players get 'Poison User' tag\n• Owners get 'Poison Owner' tag\n•\n• Available tag types: Poison Owner, Poison Admin, Poison VIP, Poison<3"
         })
     end
     
