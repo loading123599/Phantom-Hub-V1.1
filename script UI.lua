@@ -15,7 +15,7 @@ print("Loading Player Tags system...")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Configuration
 local CONFIG = {
@@ -59,17 +59,8 @@ local RankColors = {
     }
 }
 
--- Create a unique ID for this execution instance
-local executionId = HttpService:GenerateGUID(false)
-
--- Create a RemoteEvent to communicate between players who have executed the script
-local remoteEvent = Instance.new("RemoteEvent")
-remoteEvent.Name = "PoisonHubTagSystem_" .. executionId
-remoteEvent.Parent = game:GetService("ReplicatedStorage")
-
--- List to track players who have executed the script
-local executorsList = {}
-table.insert(executorsList, Players.LocalPlayer.Name)
+-- List to track players who have executed the script (start with just local player)
+local executorsList = {Players.LocalPlayer.Name}
 
 -- Function to attach tag to player's head
 local function attachTagToHead(character, player, rankText)
@@ -244,6 +235,11 @@ local function isExecutor(playerName)
     return false
 end
 
+-- Function to check if a player is an owner
+local function isOwner(playerName)
+    return FounderTags[playerName] ~= nil
+end
+
 -- Function to apply the appropriate tag to each player
 local function applyPlayerTag(player)
     -- Only apply tags to players who have executed the script
@@ -279,23 +275,44 @@ local function applyPlayerTag(player)
     end)
 end
 
--- Broadcast that this player has executed the script
-remoteEvent:FireServer(Players.LocalPlayer.Name)
+-- Setup a simple messaging system using a StringValue
+local messageValue = Instance.new("StringValue")
+messageValue.Name = "PoisonHubExecutors"
+messageValue.Value = Players.LocalPlayer.Name
+messageValue.Parent = ReplicatedStorage
 
--- Listen for other players who execute the script
-remoteEvent.OnClientEvent:Connect(function(playerName)
-    if not isExecutor(playerName) then
-        table.insert(executorsList, playerName)
-        
-        -- Apply tag to the new executor if they're in the game
-        local player = Players:FindFirstChild(playerName)
-        if player then
+-- Function to update executors list
+local function updateExecutorsList()
+    local currentExecutors = messageValue.Value:split(",")
+    executorsList = {}
+    
+    for _, name in ipairs(currentExecutors) do
+        if name and name ~= "" then
+            table.insert(executorsList, name)
+        end
+    end
+    
+    -- Apply tags to all players in the executors list
+    for _, player in ipairs(Players:GetPlayers()) do
+        if isExecutor(player.Name) then
             applyPlayerTag(player)
         end
     end
-end)
+end
 
--- Initialize for the local player only (to start)
+-- Listen for changes to the executors list
+messageValue.Changed:Connect(updateExecutorsList)
+
+-- Add this player to the executors list
+if not string.find(messageValue.Value, Players.LocalPlayer.Name) then
+    if messageValue.Value == "" then
+        messageValue.Value = Players.LocalPlayer.Name
+    else
+        messageValue.Value = messageValue.Value .. "," .. Players.LocalPlayer.Name
+    end
+end
+
+-- Initialize for the local player
 applyPlayerTag(Players.LocalPlayer)
 
 -- Set up for new players
@@ -337,8 +354,8 @@ end
 
 showNotification("Poison Hub Tags", "Tag system loaded - only showing on script executors", 5)
 
--- Return API for the tag system
-return {
+-- Create tag system API
+local TagSystem = {
     addCustomTag = addCustomTag,
     refreshTags = function()
         for _, player in pairs(Players:GetPlayers()) do
@@ -840,7 +857,68 @@ local Toggle = Tab:CreateToggle({
  local Divider = Tab:CreateDivider()
  
     local Tab = Window:CreateTab("Settings", "settings")
-    local Divider = Tab:CreateDivider()
+    
+    -- Add Player Tags tab and controls (ONLY FOR OWNERS)
+    if isOwner(Players.LocalPlayer.Name) then
+        local TagsTab = Window:CreateTab("Player Tags", "user")
+        
+        local Button = TagsTab:CreateButton({
+            Name = "Refresh Player Tags",
+            Callback = function()
+                TagSystem.refreshTags()
+            end,
+        })
+        
+        local Input = TagsTab:CreateInput({
+            Name = "Add Owner Tag",
+            PlaceholderText = "Enter username",
+            RemoveTextAfterFocusLost = true,
+            Callback = function(Text)
+                if Text and Text ~= "" then
+                    TagSystem.addCustomTag(Text)
+                    Rayfield:Notify({
+                        Title = "Tag Added",
+                        Content = "Added owner tag for " .. Text,
+                        Duration = 3,
+                    })
+                end
+            end,
+        })
+        
+        local Input = TagsTab:CreateInput({
+            Name = "Add Custom Tag",
+            PlaceholderText = "Username,TagType (e.g. Player,Poison VIP)",
+            RemoveTextAfterFocusLost = true,
+            Callback = function(Text)
+                if Text and Text ~= "" then
+                    local split = string.split(Text, ",")
+                    if #split == 2 then
+                        local username = split[1]
+                        local tagType = split[2]
+                        TagSystem.addCustomTag(username, tagType)
+                        Rayfield:Notify({
+                            Title = "Custom Tag Added",
+                            Content = "Added " .. tagType .. " tag for " .. username,
+                            Duration = 3,
+                        })
+                    else
+                        Rayfield:Notify({
+                            Title = "Error",
+                            Content = "Format should be: Username,TagType",
+                            Duration = 3,
+                        })
+                    end
+                end
+            end,
+        })
+        
+        local Divider = TagsTab:CreateDivider()
+        
+        local Paragraph = TagsTab:CreateParagraph({
+            Title = "Player Tag Instructions",
+            Content = "• Regular players get 'Poison User' tag\n• Owners get 'Poison Owner' tag\n• Custom tags can be added using the input above\n• Format for custom tags: Username,TagType\n• Available tag types: Poison Owner, Poison Admin, Poison VIP, Poison<3"
+        })
+    end
     
     local Divider = Tab:CreateDivider()
 
@@ -854,8 +932,8 @@ local Toggle = Tab:CreateToggle({
         end,
     })
     
- local Divider = Tab:CreateDivider()
- 
+    local Divider = Tab:CreateDivider()
+
     local Tab = Window:CreateTab("ReAnimation", "user")
     local Divider = Tab:CreateDivider()
 
@@ -863,6 +941,8 @@ local Toggle = Tab:CreateToggle({
     local Divider = Tab:CreateDivider()
     
     print("Poisons-Hub-V1 loaded successfully!")
+    
+    return Window
 end
 
 -- Wait a short moment before loading Rayfield UI to ensure mobile buttons are set up
