@@ -72,7 +72,7 @@ local function createMobileButtons()
     ZButton.Size = UDim2.new(0, 60, 0, 60)
     ZButton.Position = UDim2.new(0.65, 0, 0.6, 0)
     ZButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black background
-    ZButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+    ZButton.TextColor3 = Color3.fromRGB(999, 999, 999) -- White text
     ZButton.Text = "Z"
     ZButton.TextSize = 24
     ZButton.Font = Enum.Font.GothamBold
@@ -235,7 +235,7 @@ end
 
 -- Then load the Rayfield UI
 local function loadRayfieldUI()
-    print("Loading Rayfield UI...")
+    print("Loading Poison's Hub...")
     
     local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))()
 
@@ -243,9 +243,9 @@ local function loadRayfieldUI()
        Name = "Poison's Hub ",
        Icon = 0,
        LoadingTitle = "Welcome. To Poison's Hub",
-       LoadingSubtitle = "by Alex and Co Dev & 9'9",
+       LoadingSubtitle = "by Alex, 9⁹9  And Loading",
        Theme = {
-               TextColor = Color3.fromRGB(0, 0, 0),
+               TextColor = Color3.fromRGB(225, 225, 225),
                Background = Color3.fromRGB(5, 5, 5),
                Topbar = Color3.fromRGB(138, 43, 226),
                Shadow = Color3.fromRGB(138, 43, 226),
@@ -310,7 +310,7 @@ local function loadRayfieldUI()
           Key = {"poison"}
        }
     })
-
+      
     local Tab = Window:CreateTab("Main", "home")
     local Slider = Tab:CreateSlider({
        Name = "WalkSpeed",
@@ -323,9 +323,61 @@ local function loadRayfieldUI()
         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value    
        end,
     })
+  
+   local Divider = Tab:CreateDivider()
+   
+        local Button = Tab:CreateButton({
+        Name = "BasePlate ",
+        Callback = function()
+          loadstring(game:HttpGet("https://pastebin.com/raw/bRfz41fk"))()
+
+        end,
+    })
+ 
+  local Divider = Tab:CreateDivider()
+  
+local Toggle = Tab:CreateToggle({
+   Name = "Infinite Zoom",
+   CurrentValue = false,
+   Flag = "InfZoom",
+   Callback = function(Value)
+      local Players = game:GetService("Players")
+      local player = Players.LocalPlayer
+      local camera = workspace.CurrentCamera
+      local StarterGui = game:GetService("StarterGui")
+
+      if Value then
+         player.CameraMode = Enum.CameraMode.Classic
+         player.CameraMaxZoomDistance = math.huge
+         player.CameraMinZoomDistance = 0.5
+         camera.CameraType = Enum.CameraType.Custom
+
+         pcall(function()
+            StarterGui:SetCore("SendNotification", {
+               Title = "Poison's Hub",
+               Text = "Infinite Zoom Enabled thx for using poisons hub my nigga<3 :heart:",
+               Duration = 4
+            })
+         end)
+      else
+         player.CameraMode = Enum.CameraMode.Classic
+         player.CameraMaxZoomDistance = 128
+         player.CameraMinZoomDistance = 0
+         camera.CameraType = Enum.CameraType.Custom
+
+         pcall(function()
+            StarterGui:SetCore("SendNotification", {
+               Title = "Poison's Hub",
+               Text = "Infinite Zoom Disabled :(",
+               Duration = 4
+            })
+         end)
+      end
+   end,
+})
 
     local Divider = Tab:CreateDivider()
-
+  
     local Tab = Window:CreateTab("Universal", "rewind")
     local Button = Tab:CreateButton({
         Name = "Infinite Yield",
@@ -333,42 +385,73 @@ local function loadRayfieldUI()
            loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
         end,
     })
+  
+ local Divider = Tab:CreateDivider()
+ 
+        local Button = Tab:CreateButton({
+        Name = "Emote Gui",
+        Callback = function()
+          loadstring(game:HttpGet("https://pastebin.com/raw/Etrj10ww"))()
+
+        end,
+    })
     
+ local Divider = Tab:CreateDivider()
+ 
     local Button = Tab:CreateButton({
         Name = "Vc Unban",
         Callback = function()
-             loadstring(game:HttpGet("https://raw.githubusercontent.com/platinumicy/unsuspend/refs/heads/main/unsuspend"))()
+            game:GetService("VoiceChatService"):joinVoice()
         end,
     })
-
+  
+ local Divider = Tab:CreateDivider()
+ 
+    local Button = Tab:CreateButton({
+        Name = "Empty Tool's",
+        Callback = function()
+             loadstring(game:HttpGet("https://raw.githubusercontent.com/likelysmith/EmptyTools/main/script"))()
+        end,
+    })
+  
+ local Divider = Tab:CreateDivider()
+ 
     local Button = Tab:CreateButton({
         Name = "Poison Hub (System Broken Remade)",
         Callback = function()
              loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/Custom%20System%20Broken"))()
         end,
     })
-
+  
+ local Divider = Tab:CreateDivider()
+ 
     local Button = Tab:CreateButton({
         Name = "Flash Step",
         Callback = function()
              loadstring(game:HttpGet("https://raw.githubusercontent.com/0Ben1/fe/main/obf_11l7Y131YqJjZ31QmV5L8pI23V02b3191sEg26E75472Wl78Vi8870jRv5txZyL1.lua.txt"))()
         end,
     })
-
+  
+ local Divider = Tab:CreateDivider()
+ 
     local Button = Tab:CreateButton({
         Name = "Jerk Off Tool",
         Callback = function()
              loadstring(game:HttpGet("https://pastefy.app/YZoglOyJ/raw"))()
         end,
     })
-    
+      
+ local Divider = Tab:CreateDivider()
+ 
     local Button = Tab:CreateButton({
         Name = "Face Fuck",
         Callback = function()
              loadstring(game:HttpGet('https://raw.githubusercontent.com/EnterpriseExperience/bruhlolw/refs/heads/main/face_bang_script.lua'))()
         end,
     })
-
+  
+ local Divider = Tab:CreateDivider()
+ 
     local Button = Tab:CreateButton({
         Name = "Tp Tool",
         Callback = function()
@@ -393,27 +476,39 @@ local function loadRayfieldUI()
             tool.Activated:Connect(teleportToClick) 
         end 
     }) 
-
+      
+ local Divider = Tab:CreateDivider()
+ 
+    local Tab = Window:CreateTab("Settings", "settings")
+    local Divider = Tab:CreateDivider()
+    
     local Divider = Tab:CreateDivider()
 
     local Tab = Window:CreateTab("Visuals", "eye")
     local Divider = Tab:CreateDivider()
 
+    local Button = Tab:CreateButton({
+        Name = "RTX shaders",
+        Callback = function()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/randomstring0/pshade-ultimate/refs/heads/main/src/cd.lua'))()
+        end,
+    })
+    
+ local Divider = Tab:CreateDivider()
+ 
     local Tab = Window:CreateTab("ReAnimation", "user")
-    local Divider = Tab:CreateDivider()
-
-    local Tab = Window:CreateTab("Settings", "settings")
     local Divider = Tab:CreateDivider()
 
     local Tab = Window:CreateTab("Copy Animation", "pen")
     local Divider = Tab:CreateDivider()
     
-    print("Rayfield UI loaded successfully!")
+    print("Poisons-Hub-V1 loaded successfully!")
 end
 
 -- Execute in sequence with proper timing
 print("Starting execution sequence...")
-print("1. Loading BigBaseplate (already executed)...")
+print("1. Loading BigBaseplate...")
+-- BigBaseplate already executed at the beginning
 wait(1.5) -- Give BigBaseplate time to initialize
 
 print("2. Creating mobile buttons...")
