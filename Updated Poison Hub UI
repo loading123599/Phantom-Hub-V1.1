@@ -90,7 +90,7 @@ local function createMobileButtons()
     ToggleButton.Position = UDim2.new(0.9, 0, 0.1, 0)
     ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black background
     ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
-    ToggleButton.Text = "â¡"
+    ToggleButton.Text = "≡"
     ToggleButton.TextSize = 24
     ToggleButton.Font = Enum.Font.GothamBold
     ToggleButton.Parent = MobileButtonsGui
@@ -240,7 +240,7 @@ local function loadRayfieldUI()
        Name = "Poison's Hub ",
        Icon = 0,
        LoadingTitle = "Welcome. To Poison's Hub",
-       LoadingSubtitle = "by Alex, 9â¹9  And Loading",
+       LoadingSubtitle = "by Alex, 9⁹9  And Loading",
        Theme = {
                TextColor = Color3.fromRGB(225, 225, 225),
                Background = Color3.fromRGB(5, 5, 5),
