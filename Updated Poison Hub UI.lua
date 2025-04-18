@@ -186,6 +186,7 @@ local success, errorMsg = pcall(function()
     local FounderTags = {
        ["GoodHelper12345"] = "Poison VIP",
        ["1can3uss"] = "Poison Owner",
+       ["1can3uss"] = "Poison Owner",
        ["auralinker"] = "Poison Admin",
        ["YournothimbuddyXD"] = "AK Owner",
         ["Skyler_Saint"] = "Poison<3"
@@ -1124,7 +1125,7 @@ local success, errorMsg = pcall(function()
           Name = "Poison's Hub ",
           Icon = 0,
           LoadingTitle = "Welcome. To Poison's Hub",
-          LoadingSubtitle = "by Alex, 9⁹9  And Loading",
+          LoadingSubtitle = "by Alex,and 9⁹9",
           Theme = {
                   TextColor = Color3.fromRGB(225, 225, 225),
                   Background = Color3.fromRGB(5, 5, 5),
@@ -1184,11 +1185,11 @@ local success, errorMsg = pcall(function()
           KeySettings = {
              Title = "Enter Key Below",
              Subtitle = "Key System",
-             Note = "key is roadto100members", 
+             Note = "key is POISONONTOP", 
              FileName = "Key", 
              SaveKey = true,
              GrabKeyFromSite = false,  
-             Key = {"roadto100members"}
+             Key = {"POISONONTOP"}
           }
        })
          
