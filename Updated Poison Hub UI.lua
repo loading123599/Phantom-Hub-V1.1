@@ -1,6 +1,3 @@
--- Combined Script for Poison's Hub with AK Admin Player Tag System (Fixed)
-
--- First, load the BigBaseplate
 print("Loading BigBaseplate...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/BigBaseplate.lua"))()
 print("BigBaseplate loaded successfully!")
