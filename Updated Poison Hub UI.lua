@@ -184,12 +184,11 @@ local success, errorMsg = pcall(function()
 
     -- Define founders/owners with their custom tags (keeping original Poison Hub names and roles)
     local FounderTags = {
-       ["GoodHelper12345"] = "Poison Owner",
-       ["karez6"] = "Poison Owner",
-       ["nagerboyloading"] = "Poison Owner",
+       ["GoodHelper12345"] = "Poison VIP",
        ["1can3uss"] = "Poison Owner",
        ["auralinker"] = "Poison Admin",
-       ["YournothimbuddyXD"] = "AK Owner"
+       ["YournothimbuddyXD"] = "AK Owner",
+        ["Skyler_Saint"] = "Poison<3"
     }
 
     -- Rank data with colors and emojis (using Poison Hub ranks)
