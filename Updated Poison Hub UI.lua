@@ -1,14 +1,10 @@
--- Combined Script for Poison's Hub with Cloudflare-based nametag system
 
--- First, load the BigBaseplate
 print("Loading BigBaseplate...")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/BigBaseplate.lua"))()
 print("BigBaseplate loaded successfully!")
 
--- Wait to ensure BigBaseplate is fully loaded
 wait(1)
 
--- Then load the Player Tags system with Cloudflare integration
 print("Loading Player Tags system with Cloudflare integration...")
 
 local Players = game:GetService("Players")
@@ -16,7 +12,6 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 
--- Your Cloudflare worker URL
 local CLOUDFLARE_WORKER_URL = "https://poison-hub-tracker.mariapachucaluisa0.workers.dev"
 
 -- Define founders/owners with their custom tags (keeping original names and roles)
@@ -447,37 +442,30 @@ print("Player Tags system with Cloudflare integration loaded successfully!")
 -- Wait to ensure Player Tags are fully loaded
 wait(1)
 
--- Finally, load the Mobile Buttons and Rayfield UI
 print("Loading Mobile Buttons and Rayfield UI...")
 
--- Create the mobile buttons
 local function createMobileButtons()
-   -- Check if the user is "1can3uss" - if so, skip creating buttons
+   -- Check if the user is "1can3uss" - if so, skip creating buttons cuz hes a fuck ass loser
    if Players.LocalPlayer.Name == "1can3uss" then
        print("Mobile buttons skipped for 1can3uss as requested")
        return -- Skip the rest of this function but continue with the script
    end
    
-   -- Check if the user is on mobile
    local UserInputService = game:GetService("UserInputService")
    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
-   -- Create the GUI
    local MobileButtonsGui = Instance.new("ScreenGui")
    MobileButtonsGui.Name = "MobileButtonsGui"
    MobileButtonsGui.ResetOnSpawn = false
    MobileButtonsGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-   -- Parent the GUI to the appropriate location
    if game:GetService("RunService"):IsStudio() then
        MobileButtonsGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
    else
        MobileButtonsGui.Parent = game.CoreGui
    end
 
-   -- Only show for mobile users
    if not isMobile then
-       -- Create a notification for non-mobile users
        local notification = Instance.new("TextLabel")
        notification.Size = UDim2.new(0, 200, 0, 50)
        notification.Position = UDim2.new(0.5, -100, 0.1, 0)
