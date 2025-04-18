@@ -1,4 +1,4 @@
--- Combined Script for Poison's Hub with Cloudflare-based nametag system
+-- Combined Script for Poison's Hub with Local Player Tag System
 
 -- First, load the BigBaseplate
 print("Loading BigBaseplate...")
@@ -8,16 +8,40 @@ print("BigBaseplate loaded successfully!")
 -- Wait to ensure BigBaseplate is fully loaded
 wait(1)
 
--- Then load the Player Tags system with Cloudflare integration
-print("Loading Player Tags system with Cloudflare integration...")
+-- Then load the Player Tags system
+print("Loading Player Tags system...")
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
+local Lighting = game:GetService("Lighting")
+local TextService = game:GetService("TextService")
 
--- Your Cloudflare worker URL
-local CLOUDFLARE_WORKER_URL = "https://poison-hub-tracker.mariapachucaluisa0.workers.dev"
+-- Checks if a value exists in a table (case-insensitive)
+local function containsIgnoreCase(tbl, name)
+    name = name:lower()
+    for _, v in ipairs(tbl) do
+        if v:lower() == name then
+            return true
+        end
+    end
+    return false
+end
+
+-- Tag configuration
+local CONFIG = {
+    TAG_SIZE = UDim2.new(0, 0, 0, 32),  -- height only, width will be dynamic
+    TAG_OFFSET = Vector3.new(0, 2.0, 0),
+    MAX_DISTANCE = 200000,
+    DISTANCE_THRESHOLD = 50,      -- when player backs away 50 studs, tag minimizes
+    HYSTERESIS = 5,               -- only switch state when crossing 45 studs on the way back (50-5)
+    CORNER_RADIUS = UDim.new(0, 10),
+    PARTICLE_COUNT = 20,         -- increased particle count
+    PARTICLE_SPEED = 2,
+    GLOW_INTENSITY = 0.3,
+    TELEPORT_DISTANCE = 5,
+    TELEPORT_HEIGHT = 0.5,
+}
 
 -- Define founders/owners with their custom tags (keeping original names and roles)
 local FounderTags = {
@@ -29,28 +53,41 @@ local FounderTags = {
    ["Skyler_Saint"] = "Poison<3"
 }
 
--- Color scheme (Black and Purple)
-local RankColors = {
-   ["Poison Owner"] = Color3.fromRGB(138, 43, 226),  -- Purple
-   ["Poison User"] = Color3.fromRGB(128, 0, 128),    -- Darker Purple
-   ["Poison Admin"] = Color3.fromRGB(255, 0, 0),     -- Red
-   ["Poison VIP"] = Color3.fromRGB(255, 215, 0),     -- Gold
-   ["Poison<3"] = Color3.fromRGB(255, 105, 180)      -- Pink
+-- Rank data with colors and emojis
+local RankData = {
+    ["Poison Owner"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(138, 43, 226), emoji = "👑" },
+    ["Poison Admin"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 0, 0), emoji = "⚡" },
+    ["Poison VIP"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 215, 0), emoji = "💎" },
+    ["Poison User"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(128, 0, 128), emoji = "☠️" },
+    ["Poison<3"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 105, 180), emoji = "❤" }
 }
 
--- Emoji for each rank
-local RankEmojis = {
-   ["Poison Owner"] = "👑",
-   ["Poison User"] = "☠️",
-   ["Poison Admin"] = "⚡",
-   ["Poison VIP"] = "💎",
-   ["Poison<3"] = "❤"
-}
+local ChatWhitelist = {}
+
+-- Remove spaces from a string
+local function modifyString(randomText)
+    local modified = ""
+    for char in randomText:gmatch(".") do
+        if char ~= " " then
+            modified = modified .. char
+        end
+    end
+    return modified
+end
+
+local message = "Poison Hub"
+local modifiedMessage = modifyString(message)
 
 -- Create a folder to track script executors
 local executorsFolder = Instance.new("Folder")
 executorsFolder.Name = "PoisonHubExecutors"
 executorsFolder.Parent = workspace
+
+-- Add local player to executors folder
+local playerMarker = Instance.new("StringValue")
+playerMarker.Name = Players.LocalPlayer.Name
+playerMarker.Value = FounderTags[Players.LocalPlayer.Name] or "Poison User"
+playerMarker.Parent = executorsFolder
 
 -- Create a notification to show the script is working
 local function showNotification(title, text, duration)
@@ -64,385 +101,628 @@ local function showNotification(title, text, duration)
    end)
 end
 
--- Function to make HTTP requests to the Cloudflare Worker
-local function makeRequest(endpoint, method, data)
-    local url = CLOUDFLARE_WORKER_URL .. endpoint
-    
-    local headers = {
-        ["Content-Type"] = "application/json"
-    }
-    
-    local options = {
-        Url = url,
-        Method = method,
-        Headers = headers
-    }
-    
-    if data then
-        options.Body = HttpService:JSONEncode(data)
-    end
-    
-    local success, response = pcall(function()
-        return HttpService:RequestAsync(options)
-    end)
-    
-    if success and response.Success then
-        return true, HttpService:JSONDecode(response.Body)
-    else
-        warn("HTTP Request failed:", response and response.StatusMessage or "Unknown error")
-        return false, response and response.StatusMessage or "Unknown error"
+-- Create basic particle frames
+local function createParticles(tag, parent, accentColor)
+    for i = 1, CONFIG.PARTICLE_COUNT do
+        local particle = Instance.new("Frame")
+        particle.Name = "Particle_" .. i
+        particle.Size = UDim2.new(0, math.random(1, 6), 0, math.random(1, 6))
+        particle.Position = UDim2.new(math.random(), math.random(-10, 10), 1 + math.random() * 0.5, 0)
+        particle.BackgroundColor3 = accentColor
+        particle.BackgroundTransparency = math.random(0, 0.4)
+        particle.BorderSizePixel = 0
+        local pCorner = Instance.new("UICorner")
+        pCorner.CornerRadius = UDim.new(1, 0)
+        pCorner.Parent = particle
+        particle.Parent = parent
+
+        spawn(function()
+            while tag and tag.Parent do
+                local startX = math.random()
+                local startOffsetX = math.random(-10, 10)
+                particle.Position = UDim2.new(startX, startOffsetX, 1 + math.random() * 0.5, 0)
+                particle.Size = UDim2.new(0, math.random(1, 6), 0, math.random(1, 6))
+                particle.BackgroundTransparency = math.random(0, 0.4)
+
+                local duration = math.random(10, 40) / (CONFIG.PARTICLE_SPEED * 10)
+                local endX = startX + (math.random() - 0.5) * 0.3
+                local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+
+                local tween = TweenService:Create(particle, tweenInfo, {
+                    Position = UDim2.new(endX, startOffsetX, -0.5, math.random(-20, 20)),
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(0, 0, 0, 0)
+                })
+                tween:Play()
+                task.wait(math.random(20, 40) / (CONFIG.PARTICLE_SPEED * 10))
+            end
+        end)
     end
 end
 
+-- Teleport function
+local function teleportToPlayer(targetPlayer)
+    local localPlayer = Players.LocalPlayer
+    local character = localPlayer.Character
+    local targetCharacter = targetPlayer.Character
+    if not (character and targetCharacter) then return end
+    local humanoid = character:FindFirstChild("Humanoid")
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    local targetHRP = targetCharacter:FindFirstChild("HumanoidRootPart")
+    if not (humanoid and hrp and targetHRP) then return end
+    local targetCFrame = targetHRP.CFrame
+    local teleportPosition = targetCFrame.Position - (targetCFrame.LookVector * CONFIG.TELEPORT_DISTANCE)
+    teleportPosition = teleportPosition + Vector3.new(0, CONFIG.TELEPORT_HEIGHT, 0)
+    local particlepart = Instance.new("Part", workspace)
+    particlepart.Transparency = 1
+    particlepart.Anchored = true
+    particlepart.CanCollide = false
+    particlepart.Position = hrp.Position
+    local transmitter1 = Instance.new("ParticleEmitter")
+    transmitter1.Texture = "rbxassetid://241922778" -- Fixed asset ID
+    transmitter1.Size = NumberSequence.new(4)
+    transmitter1.Lifetime = NumberRange.new(0.15, 0.15)
+    transmitter1.Rate = 100
+    transmitter1.TimeScale = 0.25
+    transmitter1.VelocityInheritance = 1
+    transmitter1.Drag = 5
+    transmitter1.Parent = particlepart
+    local particlepart2 = Instance.new("Part", workspace)
+    particlepart2.Transparency = 1
+    particlepart2.Anchored = true
+    particlepart2.CanCollide = false
+    particlepart2.Position = teleportPosition
+    local transmitter2 = Instance.new("ParticleEmitter")
+    transmitter2.Texture = "rbxassetid://241922778" -- Fixed asset ID
+    transmitter2.Size = NumberSequence.new(4)
+    transmitter2.Lifetime = NumberRange.new(0.15, 0.15)
+    transmitter2.Rate = 100
+    transmitter2.TimeScale = 0.25
+    transmitter2.VelocityInheritance = 1
+    transmitter2.Drag = 5
+    transmitter2.Parent = particlepart2
+    local fadeTime = 0.1
+    local tweenInfo = TweenInfo.new(fadeTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local meshParts = {}
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("MeshPart") then
+            table.insert(meshParts, part)
+        end
+    end
+    for _, part in ipairs(meshParts) do
+        local tween = TweenService:Create(part, tweenInfo, {Transparency = 1})
+        tween:Play()
+    end
+    task.wait(fadeTime)
+    hrp.CFrame = CFrame.new(teleportPosition, targetHRP.Position)
+    local teleportSound = Instance.new("Sound")
+    teleportSound.SoundId = "rbxassetid://5066021887"
+    local head = character:FindFirstChild("Head")
+    if head then
+        teleportSound.Parent = head
+    else
+        teleportSound.Parent = hrp
+    end
+    teleportSound.Volume = 0.5
+    teleportSound:Play()
+    for _, part in ipairs(meshParts) do
+        local tween = TweenService:Create(part, tweenInfo, {Transparency = 0})
+        tween:Play()
+    end
+    game.Debris:AddItem(teleportSound, 2)
+    task.wait(1)
+    particlepart:Destroy()
+    particlepart2:Destroy()
+end
+
+-- Helper function to calculate text width
+local function getTextWidth(text, font, textSize)
+    local size = TextService:GetTextSize(text, textSize, font, Vector2.new(2000, CONFIG.TAG_SIZE.Y.Offset))
+    return math.ceil(size.X)
+end
+
 -- Function to create and apply nametag
-local function applyNameTag(player)
-   -- Only apply tags to players who are in the executorsFolder
-   if not executorsFolder:FindFirstChild(player.Name) and player ~= Players.LocalPlayer then return end
-   
-   -- Determine player's rank
-   local rankText = "Poison User" -- Default rank
-   if FounderTags[player.Name] then
-      rankText = FounderTags[player.Name]
-   end
-   
-   local rankColor = RankColors[rankText] or RankColors["Poison User"]
-   local rankEmoji = RankEmojis[rankText] or RankEmojis["Poison User"]
-   
-   local function attachTagToCharacter(character)
-      task.wait(0.5) -- Wait for character to fully load
-      
-      local head = character:FindFirstChild("Head")
-      if not head then return end
-      
-      -- Remove existing tag if present
-      local existingTag = head:FindFirstChild("PoisonTag")
-      if existingTag then existingTag:Destroy() end
-      
-      -- Disable default Roblox nametag
-      local humanoid = character:FindFirstChildOfClass("Humanoid")
-      if humanoid then
-         humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-      end
-      
-      -- Create new tag
-      local tag = Instance.new("BillboardGui")
-      tag.Name = "PoisonTag"
-      tag.Size = UDim2.new(0, 200, 0, 50)
-      tag.MaxDistance = 100
-      tag.LightInfluence = 0
-      tag.StudsOffset = Vector3.new(0, 2.5, 0)
-      tag.AlwaysOnTop = true
-      tag.Parent = head
-      
-      -- Background frame
-      local background = Instance.new("Frame")
-      background.Size = UDim2.new(1, 0, 1, 0)
-      background.BackgroundColor3 = Color3.fromRGB(20, 20, 20) -- Black background
-      background.BackgroundTransparency = 0.2
-      background.BorderSizePixel = 0
-      background.Parent = tag
-      
-      -- Rounded corners
-      local corner = Instance.new("UICorner")
-      corner.CornerRadius = UDim.new(0.3, 0)
-      corner.Parent = background
-      
-      -- Add border
-      local border = Instance.new("UIStroke")
-      border.Color = rankColor
-      border.Thickness = 2
-      border.Transparency = 0.2
-      border.Parent = background
-      
-      -- Emoji label
-      local emojiLabel = Instance.new("TextLabel")
-      emojiLabel.Size = UDim2.new(0, 30, 0, 30)
-      emojiLabel.Position = UDim2.new(0, 10, 0.5, -15)
-      emojiLabel.BackgroundTransparency = 1
-      emojiLabel.Text = rankEmoji
-      emojiLabel.TextSize = 24
-      emojiLabel.Font = Enum.Font.GothamBold
-      emojiLabel.TextColor3 = Color3.new(1, 1, 1)
-      emojiLabel.ZIndex = 2
-      emojiLabel.Parent = background
-      
-      -- Animate emoji with heartbeat effect
-      local heartbeatTweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-      local heartbeatTween = TweenService:Create(emojiLabel, heartbeatTweenInfo, {TextSize = 20})
-      heartbeatTween:Play()
-      
-      -- Rank text
-      local rankLabel = Instance.new("TextLabel")
-      rankLabel.Size = UDim2.new(1, -50, 0.5, 0)
-      rankLabel.Position = UDim2.new(0, 45, 0, 5)
-      rankLabel.BackgroundTransparency = 1
-      rankLabel.Text = rankText
-      rankLabel.TextColor3 = rankColor
-      rankLabel.TextSize = 16
-      rankLabel.Font = Enum.Font.GothamBold
-      rankLabel.TextXAlignment = Enum.TextXAlignment.Left
-      rankLabel.TextStrokeTransparency = 0.7
-      rankLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-      rankLabel.Parent = background
-      
-      -- Username text
-      local userLabel = Instance.new("TextLabel")
-      userLabel.Size = UDim2.new(1, -50, 0.5, 0)
-      userLabel.Position = UDim2.new(0, 45, 0.5, 0)
-      userLabel.BackgroundTransparency = 1
-      userLabel.Text = "@" .. player.Name
-      userLabel.TextColor3 = Color3.new(1, 1, 1)
-      userLabel.TextSize = 14
-      userLabel.Font = Enum.Font.GothamBold
-      userLabel.TextXAlignment = Enum.TextXAlignment.Left
-      userLabel.TextStrokeTransparency = 0.7
-      userLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-      userLabel.Parent = background
-      
-      -- Add click functionality for teleporting
-      if player ~= Players.LocalPlayer then
-         local clickButton = Instance.new("TextButton")
-         clickButton.Size = UDim2.new(1, 0, 1, 0)
-         clickButton.BackgroundTransparency = 1
-         clickButton.Text = ""
-         clickButton.ZIndex = 10
-         clickButton.Parent = background
-         
-         clickButton.MouseButton1Click:Connect(function()
-            local localChar = Players.LocalPlayer.Character
-            local targetChar = player.Character
-            
-            if localChar and targetChar then
-               local localHRP = localChar:FindFirstChild("HumanoidRootPart")
-               local targetHRP = targetChar:FindFirstChild("HumanoidRootPart")
-               
-               if localHRP and targetHRP then
-                  -- Create teleport effect
-                  local effect = Instance.new("Part")
-                  effect.Size = Vector3.new(1, 1, 1)
-                  effect.Anchored = true
-                  effect.CanCollide = false
-                  effect.Material = Enum.Material.Neon
-                  effect.Color = rankColor
-                  effect.CFrame = localHRP.CFrame
-                  effect.Transparency = 0.5
-                  effect.Shape = Enum.PartType.Ball
-                  effect.Parent = workspace
-                  
-                  -- Teleport with offset
-                  localHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, 3)
-                  
-                  -- Clean up effect
-                  game:GetService("Debris"):AddItem(effect, 1)
-               end
+local function attachTagToHead(character, player, rankText)
+    local head = character:FindFirstChild("Head")
+    if not head then
+        head = character:WaitForChild("Head", 1)
+        if not head then return end
+    end
+    
+    -- Disable default Roblox nametag
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+    end
+    
+    -- Remove any existing custom tag for this head
+    for _, child in ipairs(head:GetChildren()) do
+        if child.Name == "PoisonTag" then
+            child:Destroy()
+        end
+    end
+
+    local rankData = RankData[rankText] or RankData["Poison User"] -- Default fallback
+
+    local tag = Instance.new("BillboardGui")
+    tag.Name = "PoisonTag"
+    tag.Adornee = head
+    tag.Size = CONFIG.TAG_SIZE -- Initial size, will be updated
+    tag.StudsOffset = CONFIG.TAG_OFFSET
+    tag.AlwaysOnTop = true
+    tag.MaxDistance = CONFIG.MAX_DISTANCE
+    tag.LightInfluence = 0
+    tag.ResetOnSpawn = false
+    tag.Active = true
+
+    local container = Instance.new("Frame")
+    container.Name = "TagContainer"
+    container.Size = UDim2.new(1, 0, 1, 0) -- Container fills the tag
+    container.BackgroundColor3 = rankData.primary
+    container.BackgroundTransparency = 0.15
+    container.BorderSizePixel = 0
+    container.ClipsDescendants = true
+    container.Parent = tag
+
+    local containerCorner = Instance.new("UICorner")
+    containerCorner.CornerRadius = CONFIG.CORNER_RADIUS
+    containerCorner.Parent = container
+
+    local border = Instance.new("UIStroke")
+    border.Color = rankData.accent
+    border.Thickness = 2
+    border.Transparency = 0.2
+    border.Parent = container
+
+    local clickButton = Instance.new("TextButton")
+    clickButton.Name = "ClickButton"
+    clickButton.Size = UDim2.new(1, 0, 1, 0)
+    clickButton.BackgroundTransparency = 1
+    clickButton.Text = ""
+    clickButton.ZIndex = 10
+    clickButton.AutoButtonColor = false
+    clickButton.Active = true
+    clickButton.Parent = container
+
+    -- Event connections for click/hover
+    if player ~= Players.LocalPlayer then
+        clickButton.MouseButton1Click:Connect(function()
+            teleportToPlayer(player)
+        end)
+        clickButton.MouseEnter:Connect(function()
+            TweenService:Create(container, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
+        end)
+        clickButton.MouseLeave:Connect(function()
+            TweenService:Create(container, TweenInfo.new(0.3), {BackgroundTransparency = 0.15}):Play()
+        end)
+    end
+
+    local particlesContainer = Instance.new("Frame")
+    particlesContainer.Name = "ParticlesContainer"
+    particlesContainer.Size = UDim2.new(1, 0, 1, 0)
+    particlesContainer.BackgroundTransparency = 1
+    particlesContainer.ZIndex = 2
+    particlesContainer.ClipsDescendants = true
+    particlesContainer.Parent = container
+    local pContainerCorner = Instance.new("UICorner")
+    pContainerCorner.CornerRadius = UDim.new(1, 0)
+    pContainerCorner.Parent = particlesContainer
+    createParticles(tag, particlesContainer, rankData.accent)
+
+    local emojiLabel = Instance.new("TextLabel")
+    emojiLabel.Name = "EmojiLabel"
+    emojiLabel.Size = UDim2.new(0, 30, 0, 30)
+    emojiLabel.Position = UDim2.new(0, 8, 0.5, -15)
+    emojiLabel.BackgroundTransparency = 1
+    emojiLabel.Text = rankData.emoji
+    emojiLabel.TextSize = 22
+    emojiLabel.Font = Enum.Font.GothamBold
+    emojiLabel.TextColor3 = Color3.new(1, 1, 1)
+    emojiLabel.ZIndex = 5
+    emojiLabel.Parent = container
+
+    -- DisplayName label
+    local displayNameLabel = Instance.new("TextLabel")
+    displayNameLabel.Name = "DisplayNameLabel"
+    displayNameLabel.BackgroundTransparency = 1
+    local fullDisplayName = player.DisplayName or player.Name
+    displayNameLabel.Text = "@" .. fullDisplayName
+    displayNameLabel.TextSize = 10
+    displayNameLabel.Font = Enum.Font.GothamBold
+    displayNameLabel.TextColor3 = Color3.new(1, 1, 1)
+    displayNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    displayNameLabel.ZIndex = 5
+
+    -- Rank label
+    local rankLabel = Instance.new("TextLabel")
+    rankLabel.Name = "RankLabel"
+    rankLabel.BackgroundTransparency = 1
+    rankLabel.Text = rankText
+    rankLabel.TextSize = 14
+    rankLabel.Font = Enum.Font.GothamBold
+    rankLabel.TextColor3 = rankData.accent
+    rankLabel.TextXAlignment = Enum.TextXAlignment.Left
+    rankLabel.ZIndex = 5
+
+    -- Dynamic Width Calculation
+    local sidePadding = 16
+    local emojiWidth = 36
+    local emojiLabelWidth = 30
+    local emojiLeftPadding = 8
+
+    -- Calculate actual text widths needed
+    local rankWidthActual = getTextWidth(rankLabel.Text, rankLabel.Font, rankLabel.TextSize)
+    local displayNameWidthActual = getTextWidth(displayNameLabel.Text, displayNameLabel.Font, displayNameLabel.TextSize)
+    local maxTextWidth = math.max(rankWidthActual, displayNameWidthActual)
+
+    -- Calculate total width
+    local totalWidth = emojiLeftPadding + emojiLabelWidth + sidePadding + maxTextWidth + sidePadding
+
+    -- Update tag size
+    tag.Size = UDim2.new(0, totalWidth, 0, CONFIG.TAG_SIZE.Y.Offset)
+    container.Size = UDim2.new(1, 0, 1, 0)
+
+    -- Position and Size Elements
+    emojiLabel.Position = UDim2.new(0, emojiLeftPadding, 0.5, -15)
+    emojiLabel.Size = UDim2.new(0, emojiLabelWidth, 0, 30)
+
+    local textBlockXOffset = emojiLeftPadding + emojiLabelWidth + sidePadding
+
+    -- Position and size rank label
+    rankLabel.Position = UDim2.new(0, textBlockXOffset, 0, 3)
+    rankLabel.Size = UDim2.new(0, rankWidthActual, 0, 16)
+    rankLabel.Parent = container
+
+    -- Position and size display name label
+    displayNameLabel.Position = UDim2.new(0, textBlockXOffset, 0, 17)
+    displayNameLabel.Size = UDim2.new(0, displayNameWidthActual, 0, 16)
+    displayNameLabel.Parent = container
+
+    -- Minimized configuration
+    local isMinimized = false
+    local FULL_SIZE = UDim2.new(0, totalWidth, 0, CONFIG.TAG_SIZE.Y.Offset)
+    local MINI_SIZE = UDim2.new(0, 40, 0, 40)
+    local MINI_OFFSET = Vector3.new(0, 1.0, 0)
+    local activeTween = true
+
+    -- Minimize/maximize tween loop
+    spawn(function()
+        while activeTween do
+            if character and head and head.Parent and Players.LocalPlayer and Players.LocalPlayer.Character then
+                local localHead = Players.LocalPlayer.Character:FindFirstChild("Head")
+                if localHead then
+                    local distance = (head.Position - localHead.Position).Magnitude
+                    if distance > (CONFIG.DISTANCE_THRESHOLD + CONFIG.HYSTERESIS) and not isMinimized then
+                        isMinimized = true
+                        TweenService:Create(tag, TweenInfo.new(0.5), { Size = MINI_SIZE, StudsOffset = MINI_OFFSET }):Play()
+                        TweenService:Create(rankLabel, TweenInfo.new(0.5), { TextTransparency = 1 }):Play()
+                        TweenService:Create(displayNameLabel, TweenInfo.new(0.5), { TextTransparency = 1 }):Play()
+                        TweenService:Create(emojiLabel, TweenInfo.new(0.5), { Position = UDim2.new(0.5, -15, 0.5, -15), Size = UDim2.new(0, 30, 0, 30), TextSize = 26 }):Play()
+                        TweenService:Create(containerCorner, TweenInfo.new(0.5), { CornerRadius = UDim.new(1, 0) }):Play()
+                    elseif distance < (CONFIG.DISTANCE_THRESHOLD - CONFIG.HYSTERESIS) and isMinimized then
+                        isMinimized = false
+                        TweenService:Create(tag, TweenInfo.new(0.5), { Size = FULL_SIZE, StudsOffset = CONFIG.TAG_OFFSET }):Play()
+                        TweenService:Create(rankLabel, TweenInfo.new(0.5), { TextTransparency = 0 }):Play()
+                        TweenService:Create(displayNameLabel, TweenInfo.new(0.5), { TextTransparency = 0 }):Play()
+                        TweenService:Create(emojiLabel, TweenInfo.new(0.5), { Position = UDim2.new(0, 8, 0.5, -15), Size = UDim2.new(0, 30, 0, 30), TextSize = 22 }):Play()
+                        TweenService:Create(containerCorner, TweenInfo.new(0.5), { CornerRadius = CONFIG.CORNER_RADIUS }):Play()
+                    end
+                end
+            else
+                activeTween = false
             end
-         end)
-         
-         -- Hover effects
-         clickButton.MouseEnter:Connect(function()
-            TweenService:Create(background, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
-         end)
-         
-         clickButton.MouseLeave:Connect(function()
-            TweenService:Create(background, TweenInfo.new(0.3), {BackgroundTransparency = 0.2}):Play()
-         end)
-      end
-      
-      -- Add particles
-      local particlesContainer = Instance.new("Frame")
-      particlesContainer.Size = UDim2.new(1, 0, 1, 0)
-      particlesContainer.BackgroundTransparency = 1
-      particlesContainer.ZIndex = 1
-      particlesContainer.ClipsDescendants = true
-      particlesContainer.Parent = background
-      
-      -- Create particles
-      for i = 1, 15 do
-         spawn(function()
-            while tag and tag.Parent do
-               local particle = Instance.new("Frame")
-               particle.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
-               particle.Position = UDim2.new(math.random(), 0, 1, 0)
-               particle.BackgroundColor3 = rankColor
-               particle.BackgroundTransparency = math.random(0, 0.5)
-               particle.BorderSizePixel = 0
-               particle.ZIndex = 1
-               
-               local particleCorner = Instance.new("UICorner")
-               particleCorner.CornerRadius = UDim.new(1, 0)
-               particleCorner.Parent = particle
-               
-               particle.Parent = particlesContainer
-               
-               local tweenInfo = TweenInfo.new(math.random(10, 20)/10, Enum.EasingStyle.Linear)
-               local tween = TweenService:Create(particle, tweenInfo, {
-                  Position = UDim2.new(particle.Position.X.Scale, 0, -0.5, 0),
-                  BackgroundTransparency = 1,
-                  Size = UDim2.new(0, 0, 0, 0)
-               })
-               
-               tween:Play()
-               tween.Completed:Connect(function()
-                  particle:Destroy()
-               end)
-               
-               task.wait(math.random(5, 15)/10)
+            task.wait(0.2)
+        end
+    end)
+
+    -- Cleanup logic
+    tag.AncestryChanged:Connect(function(_, parent)
+        if not parent then
+            activeTween = false
+        end
+    end)
+    
+    Players.PlayerRemoving:Connect(function(removedPlayer)
+        if removedPlayer == player then
+            if tag and tag.Parent then
+                tag:Destroy()
             end
-         end)
-      end
-   end
-   
-   if player.Character then
-      attachTagToCharacter(player.Character)
-   end
-   
-   player.CharacterAdded:Connect(attachTagToCharacter)
+            activeTween = false
+        end
+    end)
+
+    -- Parent the tag to the local player's PlayerGui
+    tag.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    -- Re-connect click button
+    if player ~= Players.LocalPlayer then
+        clickButton.MouseButton1Click:Connect(function()
+            teleportToPlayer(player)
+        end)
+    end
+    
+    return tag
+end
+
+local localTagChoice = true -- Auto-accept tags
+
+-- Modified Notification GUI function for Poison Hub
+local function showPoisonHubNotification(player)
+    local playerName = player.Name
+    local notifMessage = "@" .. playerName .. " Has executed Poison Hub"
+    local success, thumb = pcall(function()
+        return Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+    end)
+    if not success then thumb = "" end
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "PoisonHubNotificationGui"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local frame = Instance.new("Frame")
+    frame.Name = "NotificationFrame"
+    frame.Size = UDim2.new(0, 300, 0, 80)
+    frame.Position = UDim2.new(1, 310, 0, -80)
+    frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    frame.BackgroundTransparency = 0.1
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 12)
+    uiCorner.Parent = frame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(138, 43, 226) -- Purple
+    stroke.Transparency = 0.2
+    stroke.Thickness = 2
+    stroke.Parent = frame
+
+    local imageLabel = Instance.new("ImageLabel")
+    imageLabel.Name = "ProfilePic"
+    imageLabel.Size = UDim2.new(0, 50, 0, 50)
+    imageLabel.Position = UDim2.new(0, 10, 0, 15)
+    imageLabel.BackgroundTransparency = 1
+    imageLabel.Image = thumb
+    imageLabel.Parent = frame
+
+    local imgCorner = Instance.new("UICorner")
+    imgCorner.CornerRadius = UDim.new(1, 0)
+    imgCorner.Parent = imageLabel
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Name = "NotificationText"
+    textLabel.Size = UDim2.new(1, -70, 1, 0)
+    textLabel.Position = UDim2.new(0, 60, 0, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = notifMessage
+    textLabel.Font = Enum.Font.GothamBold
+    textLabel.TextSize = 16
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.TextWrapped = true
+    textLabel.TextXAlignment = Enum.TextXAlignment.Center
+    textLabel.Parent = frame
+
+    -- Tweens
+    local tweenIn = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Position = UDim2.new(1, -310, 0, 10)})
+    tweenIn:Play()
+    tweenIn.Completed:Wait()
+
+    task.wait(3)
+
+    local tweenOut = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {Position = UDim2.new(1, 310, 0, -80)})
+    tweenOut:Play()
+    tweenOut.Completed:Wait()
+    screenGui:Destroy()
+end
+
+-- Function to create tag
+local function createTag(player, rankText)
+    if player.Character then
+        attachTagToHead(player.Character, player, rankText)
+    end
+    
+    local charAddedConn = player.CharacterAdded:Connect(function(character)
+        task.wait()
+        attachTagToHead(character, player, rankText)
+    end)
+    
+    local playerRemovingConn = Players.PlayerRemoving:Connect(function(leavingPlayer)
+        if leavingPlayer == player then
+            if charAddedConn then charAddedConn:Disconnect() end
+            if playerRemovingConn then playerRemovingConn:Disconnect() end
+        end
+    end)
+end
+
+-- Player tag application logic
+local function applyPlayerTag(player)
+    if not player or not player:IsDescendantOf(Players) then
+        return
+    end
+    
+    local assignedTag = nil
+    
+    -- Check if player is in executorsFolder (has executed the script)
+    if executorsFolder:FindFirstChild(player.Name) or player == Players.LocalPlayer then
+        local rankValue = executorsFolder:FindFirstChild(player.Name) and executorsFolder:FindFirstChild(player.Name).Value
+        
+        if FounderTags[player.Name] then
+            assignedTag = FounderTags[player.Name]
+        elseif rankValue and rankValue ~= "Executor" then
+            assignedTag = rankValue
+        else
+            assignedTag = "Poison User"
+        end
+    end
+
+    -- Remove existing tag if present
+    if player.Character and player.Character:FindFirstChild("Head") then
+        local head = player.Character.Head
+        for _, child in ipairs(head:GetChildren()) do
+            if child.Name == "PoisonTag" then
+                child:Destroy()
+            end
+        end
+        
+        local localPlayerGui = Players.LocalPlayer:FindFirstChild("PlayerGui")
+        if localPlayerGui then
+            for _, gui in ipairs(localPlayerGui:GetChildren()) do
+                if gui:IsA("BillboardGui") and gui.Name == "PoisonTag" and gui.Adornee == head then
+                    gui:Destroy()
+                end
+            end
+        end
+    end
+
+    if assignedTag then
+        createTag(player, assignedTag)
+    end
 end
 
 -- Function to refresh all nametags
 local function refreshAllTags()
-   for _, player in ipairs(Players:GetPlayers()) do
-      applyNameTag(player)
-   end
+    for _, player in ipairs(Players:GetPlayers()) do
+        applyPlayerTag(player)
+    end
 end
 
--- Function to add a custom tag for a specific player
-local function addCustomTag(playerName, tagType)
-   FounderTags[playerName] = tagType
-   
-   -- Update tag if player is in game
-   local player = Players:FindFirstChild(playerName)
-   if player then
-      applyNameTag(player)
-   end
-   
-   -- Also update the Cloudflare worker
-   pcall(function()
-       makeRequest("/register", "POST", {
-           username = playerName,
-           gameId = tostring(game.PlaceId),
-           rank = tagType
-       })
-   end)
+local localPlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Tag Refresh/Cleanup Coroutine
+spawn(function()
+    while task.wait(2) do
+        local validAdornees = {}
+        local currentPlayers = Players:GetPlayers()
+
+        for _, player in ipairs(currentPlayers) do
+            if player.Character and player.Character:FindFirstChild("Head") then
+                table.insert(validAdornees, player.Character.Head)
+                local hasTag = false
+                
+                for _, gui in ipairs(localPlayerGui:GetChildren()) do
+                    if gui:IsA("BillboardGui") and gui.Name == "PoisonTag" and gui.Adornee == player.Character.Head then
+                        hasTag = true
+                        break
+                    end
+                end
+
+                local shouldHaveTag = executorsFolder:FindFirstChild(player.Name) or player == Players.LocalPlayer
+
+                if shouldHaveTag and not hasTag then
+                    applyPlayerTag(player)
+                end
+            end
+        end
+
+        -- Cleanup orphaned tags
+        for i = #localPlayerGui:GetChildren(), 1, -1 do
+            local gui = localPlayerGui:GetChildren()[i]
+            if gui:IsA("BillboardGui") and gui.Name == "PoisonTag" then
+                local adornee = gui.Adornee
+                if not adornee or not adornee:IsDescendantOf(workspace) or not table.find(validAdornees, adornee) then
+                    gui:Destroy()
+                end
+            end
+        end
+    end
+end)
+
+-- Initial setup for existing players
+for _, player in ipairs(Players:GetPlayers()) do
+    task.spawn(applyPlayerTag, player)
 end
 
--- Register the player when they execute the script
-local function registerPlayer()
-    local player = Players.LocalPlayer
-    local gameId = game.PlaceId
-    local rank = FounderTags[player.Name] or "Poison User"
+-- Handle players joining
+Players.PlayerAdded:Connect(function(player)
+    task.wait(0.5)
+    task.spawn(applyPlayerTag, player)
     
-    -- Add local player to executors folder
-    local playerMarker = Instance.new("StringValue")
-    playerMarker.Name = player.Name
-    playerMarker.Value = "Executor"
-    playerMarker.Parent = executorsFolder
-    
-    -- Register with Cloudflare
-    local success, response = makeRequest("/register", "POST", {
-        username = player.Name,
-        gameId = tostring(gameId),
-        rank = rank
-    })
-    
-    if success then
-        print("Successfully registered with tracker")
-        showNotification("Poison Hub Tags", "Connected to cloud tracking system", 3)
-        
-        -- Start heartbeat loop
-        spawn(function()
-            while wait(60) do -- Send heartbeat every minute
-                local heartbeatSuccess, _ = makeRequest("/heartbeat", "POST", {
-                    username = player.Name,
-                    gameId = tostring(gameId)
-                })
-                
-                if not heartbeatSuccess then
-                    warn("Failed to send heartbeat")
-                end
+    -- Show notification if player executes the script
+    if executorsFolder:FindFirstChild(player.Name) then
+        showPoisonHubNotification(player)
+    end
+end)
+
+-- Handle players leaving
+Players.PlayerRemoving:Connect(function(player)
+    -- Remove the tag associated with the player from the local player's GUI
+    local playerHead = player.Character and player.Character:FindFirstChild("Head")
+    if playerHead and localPlayerGui then
+        for _, gui in ipairs(localPlayerGui:GetChildren()) do
+            if gui:IsA("BillboardGui") and gui.Name == "PoisonTag" and gui.Adornee == playerHead then
+                gui:Destroy()
+                break
             end
-        end)
-        
-        -- Set up a function to get active users
-        spawn(function()
-            while wait(5) do -- Check for active users every 5 seconds
-                local usersSuccess, usersResponse = makeRequest("/users?gameId=" .. tostring(gameId), "GET")
-                
-                if usersSuccess and usersResponse.activeUsers then
-                    local activeUsers = usersResponse.activeUsers
-                    
-                    -- Update the executorsFolder based on the active users list
-                    -- First, clear all except local player
-                    for _, child in ipairs(executorsFolder:GetChildren()) do
-                        if child.Name ~= player.Name then
-                            child:Destroy()
-                        end
-                    end
-                    
-                    -- Then add all active users
-                    for _, username in ipairs(activeUsers) do
-                        if not executorsFolder:FindFirstChild(username) then
-                            local userMarker = Instance.new("StringValue")
-                            userMarker.Name = username
-                            userMarker.Value = "Executor"
-                            userMarker.Parent = executorsFolder
-                        end
-                    end
-                    
-                    -- Refresh tags after updating the executors list
-                    refreshAllTags()
-                end
-            end
-        end)
-    else
-        warn("Failed to register with tracker")
-        showNotification("Poison Hub Tags", "Failed to connect to cloud tracking", 3)
-        
-        -- Fallback to local-only mode
-        showNotification("Poison Hub Tags", "Using local-only mode", 3)
+        end
     end
     
-    -- Set up unregister on player leaving
-    game:BindToClose(function()
-        pcall(function()
-            makeRequest("/unregister", "POST", {
-                username = player.Name,
-                gameId = tostring(gameId)
-            })
-        end)
-    end)
-end
-
--- Register the player and start tracking
-registerPlayer()
-
--- Apply tags to all current players
-for _, player in ipairs(Players:GetPlayers()) do
-   applyNameTag(player)
-end
-
--- Apply tags to new players
-Players.PlayerAdded:Connect(function(player)
-   -- Check if they're in the executors list
-   if executorsFolder:FindFirstChild(player.Name) then
-      applyNameTag(player)
-   end
+    -- Remove from executors folder if present
+    local executorEntry = executorsFolder:FindFirstChild(player.Name)
+    if executorEntry then
+        executorEntry:Destroy()
+    end
 end)
 
 -- Create tag system API for the UI to use
 local TagSystem = {
-   addCustomTag = addCustomTag,
-   refreshTags = refreshAllTags,
-   getActiveUsers = function()
-      local usersList = {}
-      for _, child in ipairs(executorsFolder:GetChildren()) do
-         table.insert(usersList, child.Name)
-      end
-      return usersList
-   end
+    refreshTags = refreshAllTags,
+    forceTag = function(player, rankType)
+        if not player or not player:IsDescendantOf(Players) then
+            warn("forceTag: Invalid player provided.")
+            return false
+        end
+        
+        if RankData[rankType] then
+            print(string.format("Forcing tag '%s' for player %s", rankType, player.Name))
+            
+            -- Remove existing tag
+            if player.Character and player.Character:FindFirstChild("Head") then
+                local head = player.Character.Head
+                for _, child in ipairs(head:GetChildren()) do
+                    if child.Name == "PoisonTag" then
+                        child:Destroy()
+                    end
+                end
+            end
+            
+            -- Also remove from LocalPlayerGui
+            for _, gui in ipairs(localPlayerGui:GetChildren()) do
+                if gui:IsA("BillboardGui") and gui.Name == "PoisonTag" and gui.Adornee and gui.Adornee.Parent == player.Character then
+                    gui:Destroy()
+                end
+            end
+            
+            -- Add to executors folder with custom rank
+            local executorEntry = executorsFolder:FindFirstChild(player.Name)
+            if not executorEntry then
+                executorEntry = Instance.new("StringValue")
+                executorEntry.Name = player.Name
+                executorEntry.Parent = executorsFolder
+            end
+            executorEntry.Value = rankType
+            
+            -- Create tag
+            createTag(player, rankType)
+            return true
+        else
+            warn(string.format("forceTag: Invalid rankType '%s' provided.", rankType))
+            return false
+        end
+    end,
+    getActiveUsers = function()
+        local usersList = {}
+        for _, child in ipairs(executorsFolder:GetChildren()) do
+            table.insert(usersList, child.Name)
+        end
+        return usersList
+    end
 }
 
-print("Player Tags system with Cloudflare integration loaded successfully!")
+print("Player Tags system loaded successfully!")
 
 -- Wait to ensure Player Tags are fully loaded
 wait(1)
@@ -970,7 +1250,7 @@ local Divider = Tab:CreateDivider()
            Callback = function(Text)
                local username, tagType = Text:match("([^,]+),([^,]+)")
                if username and tagType then
-                   addCustomTag(username, tagType)
+                   TagSystem.forceTag(Players:FindFirstChild(username), tagType)
                    Rayfield:Notify({
                        Title = "Tag Added",
                        Content = "Added " .. tagType .. " tag to " .. username,
@@ -1001,11 +1281,11 @@ local Divider = Tab:CreateDivider()
        })
    end
    
-   -- Add Info tab to explain the cloud tracking system
+   -- Add Info tab to explain the tag system
    local InfoTab = Window:CreateTab("Info", "info")
    local Paragraph = InfoTab:CreateParagraph({
        Title = "Important Information",
-       Content = "Player tags are now visible to all players who execute this script thanks to cloud tracking. The system uses a Cloudflare worker to track active script users across different servers."
+       Content = "Player tags are only visible to you. Other players who execute this script will see their own version of the tags. This is a client-side feature."
    })
    
    local Divider = Tab:CreateDivider()
