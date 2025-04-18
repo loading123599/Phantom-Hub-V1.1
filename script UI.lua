@@ -124,8 +124,7 @@ local FounderTags = {
    ["nagerboyloading"] = "Poison Owner",
    ["1can3uss"] = "Poison Owner",
    ["auralinker"] = "Poison Admin",
-   ["Skyler_Saint"] = "Poison<3",
-    ["Dode073"] = "Poison VIP",
+   ["YournothimbuddyXD"] = "AK Owner"
 }
 
 -- Rank data with colors and emojis (using Poison Hub ranks)
@@ -135,6 +134,7 @@ local RankData = {
     ["Poison VIP"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 215, 0), emoji = "💎" },
     ["Poison User"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(128, 0, 128), emoji = "☠️" },
     ["Poison<3"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 105, 180), emoji = "❤" }
+    ["AK Owner"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(138, 43, 226), emoji = "👑" },
 }
 
 local ChatWhitelist = {}
