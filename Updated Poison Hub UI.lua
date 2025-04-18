@@ -1,8 +1,25 @@
 -- Combined Script for Poison's Hub with workspace folder-based nametag system
 
+-- First, make sure we have all required services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+
+-- Error handling wrapper function
+local function safeExecute(functionName, func, ...)
+    local success, result = pcall(func, ...)
+    if not success then
+        warn("Error in " .. functionName .. ": " .. tostring(result))
+    end
+    return success, result
+end
+
 -- First, load the BigBaseplate
 print("Loading BigBaseplate...")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/BigBaseplate.lua"))()
+safeExecute("BigBaseplate", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/BigBaseplate.lua"))()
+end)
 print("BigBaseplate loaded successfully!")
 
 -- Wait to ensure BigBaseplate is fully loaded
@@ -10,12 +27,6 @@ wait(1)
 
 -- Then load the Player Tags system with workspace folder-based detection
 print("Loading Player Tags system...")
-
--- Modified Player Tag System for Poison's Hub (Only shows on script executors)
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
 
 -- Configuration
 local CONFIG = {
@@ -33,7 +44,7 @@ local CONFIG = {
     EXECUTOR_FOLDER_NAME = "PoisonHubExecutors" -- Folder in workspace to store executor data
 }
 
--- Define founders/owners with their custom tags (keeping original names and roles)
+-- Define founders/owners with their custom tags
 local FounderTags = {
     ["GoodHelper12345"] = true,              -- Will get "Poison Owner" tag
     ["karez6"] = true,                       -- Will get "Poison Owner" tag
@@ -84,6 +95,7 @@ end
 
 -- Function to mark a player as a script executor
 local function markAsExecutor(player)
+    if not player then return end
     local playerName = player.Name
     
     -- Check if this player already has a marker
@@ -174,7 +186,7 @@ local function teleportToPlayer(targetPlayer)
     particlepart.CanCollide = false
     particlepart.Position = hrp.Position
     local transmitter1 = Instance.new("ParticleEmitter")
-    transmitter1.Texture = "http://www.roblox.com/asset/?id=89296104222585"
+    transmitter1.Texture = "rbxassetid://2273224484" -- Using a valid asset ID
     transmitter1.Size = NumberSequence.new(4)
     transmitter1.Lifetime = NumberRange.new(0.15, 0.15)
     transmitter1.Rate = 100
@@ -188,7 +200,7 @@ local function teleportToPlayer(targetPlayer)
     particlepart2.CanCollide = false
     particlepart2.Position = teleportPosition
     local transmitter2 = Instance.new("ParticleEmitter")
-    transmitter2.Texture = "http://www.roblox.com/asset/?id=89296104222585"
+    transmitter2.Texture = "rbxassetid://2273224484" -- Using a valid asset ID
     transmitter2.Size = NumberSequence.new(4)
     transmitter2.Lifetime = NumberRange.new(0.15, 0.15)
     transmitter2.Rate = 100
@@ -229,10 +241,22 @@ local function teleportToPlayer(targetPlayer)
     particlepart2:Destroy()
 end
 
+-- Function to get text width
+local function getTextWidth(text, font, textSize)
+    local textService = game:GetService("TextService")
+    local result = textService:GetTextSize(text, textSize, font, Vector2.new(1000, 16))
+    return result.X
+end
+
 -- Function to attach tag to player's head
 local function attachTagToHead(character, player, rankText)
-    local head = character:WaitForChild("Head", 5)
-    if not head then return end
+    if not character or not player then return end
+    
+    local head = character:FindFirstChild("Head")
+    if not head then
+        head = character:WaitForChild("Head", 1)
+        if not head then return end
+    end
 
     -- Remove existing tag if present
     local existingTag = head:FindFirstChild("PoisonTag")
@@ -331,13 +355,6 @@ local function attachTagToHead(character, player, rankText)
     emojiLabel.ZIndex = 5
     emojiLabel.Parent = container
 
-    -- Calculate text widths for dynamic sizing
-    local function getTextWidth(text, font, textSize)
-        local textService = game:GetService("TextService")
-        local result = textService:GetTextSize(text, textSize, font, Vector2.new(1000, 16))
-        return result.X
-    end
-
     -- DisplayName label
     local displayNameLabel = Instance.new("TextLabel")
     displayNameLabel.Name = "DisplayNameLabel"
@@ -379,7 +396,6 @@ local function attachTagToHead(character, player, rankText)
 
     local sidePadding = 16 -- Increased side padding
     local emojiWidth = 36 -- 30px emoji + 6px left margin
-    local textService = game:GetService("TextService")
     local rankWidth = getTextWidth(rankLabel.Text, Enum.Font.GothamBold, 14)
     local totalWidth = emojiWidth + rankWidth + (sidePadding * 2) -- Add padding on both sides
 
@@ -451,7 +467,7 @@ local function attachTagToHead(character, player, rankText)
     tag.Parent = head
     
     return tag
-}
+end
 
 -- Function to apply the appropriate tag to each player
 local function applyPlayerTag(player)
@@ -486,7 +502,7 @@ local function applyPlayerTag(player)
             attachTagToHead(character, player, tagText)
         end
     end)
-}
+end
 
 -- Mark the local player as an executor
 markAsExecutor(Players.LocalPlayer)
@@ -817,8 +833,17 @@ wait(1)
 local function loadRayfieldUI()
     print("Loading Poison's Hub...")
     
-    local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))()
-
+    -- Use pcall to catch any errors
+    local success, Rayfield = pcall(function()
+        return loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))()
+    end)
+    
+    if not success then
+        warn("Failed to load Rayfield UI: " .. tostring(Rayfield))
+        showNotification("Error", "Failed to load Rayfield UI. Check console for details.", 5)
+        return nil
+    end
+    
     local Window = Rayfield:CreateWindow({
        Name = "Poison's Hub ",
        Icon = 0,
@@ -1143,6 +1168,11 @@ end
 
 -- Wait a short moment before loading Rayfield UI to ensure mobile buttons are set up
 wait(1)
-loadRayfieldUI()
+local window = loadRayfieldUI()
 
-print("All components loaded successfully!")
+if window then
+    print("All components loaded successfully!")
+else
+    warn("Failed to load Rayfield UI. The script may not function correctly.")
+    showNotification("Warning", "Some components failed to load. The script may not function correctly.", 5)
+end
