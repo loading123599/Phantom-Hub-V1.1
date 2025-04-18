@@ -1,4 +1,4 @@
--- Combined Script for Poison's Hub with folder-based nametag system
+-- Combined Script for Poison's Hub with workspace folder-based nametag system
 
 -- First, load the BigBaseplate
 print("Loading BigBaseplate...")
@@ -8,7 +8,7 @@ print("BigBaseplate loaded successfully!")
 -- Wait to ensure BigBaseplate is fully loaded
 wait(1)
 
--- Then load the Player Tags system with folder-based detection
+-- Then load the Player Tags system with workspace folder-based detection
 print("Loading Player Tags system...")
 
 -- Modified Player Tag System for Poison's Hub (Only shows on script executors)
@@ -22,7 +22,7 @@ local CONFIG = {
     TAG_OFFSET = Vector3.new(0, 2.4, 0),
     MAX_DISTANCE = 100,
     SCALE_DISTANCE = 50,
-    EXECUTOR_FOLDER_NAME = "PoisonHubExecutor" -- Unique folder name to identify script executors
+    EXECUTOR_FOLDER_NAME = "PoisonHubExecutors" -- Folder in workspace to store executor data
 }
 
 -- Define founders/owners with their custom tags
@@ -59,49 +59,36 @@ local RankColors = {
     }
 }
 
+-- Create or get the executors folder in workspace
+local executorsFolder
+if not workspace:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) then
+    executorsFolder = Instance.new("Folder")
+    executorsFolder.Name = CONFIG.EXECUTOR_FOLDER_NAME
+    executorsFolder.Parent = workspace
+else
+    executorsFolder = workspace:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME)
+end
+
 -- Function to mark a player as a script executor
 local function markAsExecutor(player)
-    if player.Character then
-        -- Check if the folder already exists
-        if not player.Character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) then
-            -- Create a folder to mark this player as a script executor
-            local folder = Instance.new("Folder")
-            folder.Name = CONFIG.EXECUTOR_FOLDER_NAME
-            folder.Parent = player.Character
-            
-            -- Add a StringValue with the player's name for verification
-            local nameValue = Instance.new("StringValue")
-            nameValue.Name = "ExecutorName"
-            nameValue.Value = player.Name
-            nameValue.Parent = folder
-            
-            print("Marked " .. player.Name .. " as a script executor")
-        end
-    end
+    local playerName = player.Name
     
-    -- Also set up for when the player respawns
-    player.CharacterAdded:Connect(function(character)
-        -- Create the folder again when the character respawns
-        if not character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) then
-            local folder = Instance.new("Folder")
-            folder.Name = CONFIG.EXECUTOR_FOLDER_NAME
-            folder.Parent = character
-            
-            -- Add a StringValue with the player's name for verification
-            local nameValue = Instance.new("StringValue")
-            nameValue.Name = "ExecutorName"
-            nameValue.Value = player.Name
-            nameValue.Parent = folder
-            
-            print("Re-marked " .. player.Name .. " as a script executor after respawn")
-        end
-    end)
+    -- Check if this player already has a marker
+    if not executorsFolder:FindFirstChild(playerName) then
+        -- Create a StringValue to mark this player as a script executor
+        local marker = Instance.new("StringValue")
+        marker.Name = playerName
+        marker.Value = "Executor"
+        marker.Parent = executorsFolder
+        
+        print("Marked " .. playerName .. " as a script executor")
+    end
 end
 
 -- Function to check if a player is a script executor
 local function isExecutor(player)
-    if player and player.Character then
-        return player.Character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) ~= nil
+    if player then
+        return executorsFolder:FindFirstChild(player.Name) ~= nil
     end
     return false
 end
@@ -209,7 +196,7 @@ local function attachTagToHead(character, player, rankText)
 
     RunService.Heartbeat:Connect(function()
         local localPlayer = Players.LocalPlayer
-        local localPlayerHead = localPlayer.Character and localPlayer.Character:WaitForChild("Head")
+        local localPlayerHead = localPlayer.Character and localPlayer.Character:FindFirstChild("Head")
         if localPlayer and localPlayerHead and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local targetHumanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
             if targetHumanoidRootPart then
@@ -239,7 +226,7 @@ local function attachTagToHead(character, player, rankText)
     local humanoidRootPart = player.Character:WaitForChild("HumanoidRootPart")
     RunService.Heartbeat:Connect(function()
         local localPlayer = Players.LocalPlayer
-        local localPlayerHead = localPlayer.Character and localPlayer.Character:WaitForChild("Head")
+        local localPlayerHead = localPlayer.Character and localPlayer.Character:FindFirstChild("Head")
         if localPlayer and localPlayerHead and player.Character and playerHead and humanoidRootPart then
             local distance = (localPlayerHead.Position - humanoidRootPart.Position).Magnitude
             userLabel.Visible = distance <= maxDistance
@@ -343,23 +330,23 @@ local function applyPlayerTag(player)
     end)
 end
 
--- Function to check for executor folders in all players
-local function checkAllPlayersForExecutorFolder()
+-- Mark the local player as an executor
+markAsExecutor(Players.LocalPlayer)
+
+-- Function to check for executor markers in the workspace folder
+local function checkAllPlayersForExecutorMarker()
     for _, player in ipairs(Players:GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) then
+        if executorsFolder:FindFirstChild(player.Name) then
             applyPlayerTag(player)
         end
     end
 end
 
--- Mark the local player as an executor
-markAsExecutor(Players.LocalPlayer)
-
--- Set up a loop to continuously check for executor folders
+-- Set up a loop to continuously check for executor markers
 local function startExecutorCheckLoop()
     spawn(function()
         while wait(1) do -- Check every second
-            checkAllPlayersForExecutorFolder()
+            checkAllPlayersForExecutorMarker()
         end
     end)
 end
@@ -369,15 +356,10 @@ startExecutorCheckLoop()
 
 -- Set up for new players
 Players.PlayerAdded:Connect(function(player)
-    -- Wait for their character to load
-    player.CharacterAdded:Connect(function(character)
-        -- Wait a moment for any executor folder to be created
-        wait(1)
-        -- Check if they're an executor
-        if character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) then
-            applyPlayerTag(player)
-        end
-    end)
+    -- Check if they're an executor
+    if executorsFolder:FindFirstChild(player.Name) then
+        applyPlayerTag(player)
+    end
 end)
 
 -- Function to add a custom tag for a specific player
@@ -415,14 +397,12 @@ showNotification("Poison Hub Tags", "Tag system loaded - only showing on script 
 local TagSystem = {
     addCustomTag = addCustomTag,
     refreshTags = function()
-        checkAllPlayersForExecutorFolder()
+        checkAllPlayersForExecutorMarker()
     end,
     getExecutorsList = function()
         local executorsList = {}
-        for _, player in ipairs(Players:GetPlayers()) do
-            if isExecutor(player) then
-                table.insert(executorsList, player.Name)
-            end
+        for _, child in ipairs(executorsFolder:GetChildren()) do
+            table.insert(executorsList, child.Name)
         end
         return executorsList
     end
@@ -727,6 +707,9 @@ local function loadRayfieldUI()
                PlaceholderColor = Color3.fromRGB(138, 43, 226)
            },
        DisableRayfieldPrompts = false,
+       DisableBuildWarnings = false,43,226)
+           },
+       DisableRayfieldPrompts = false,
        DisableBuildWarnings = false,
 
        ConfigurationSaving = {
@@ -1011,7 +994,7 @@ print("All components loaded successfully!")
 
 -- Create a loadstring version for easy distribution
 local loadstringVersion = [[
-loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/Updated%20Poison%20Hub%20UI.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/Workspace-Folder-Nametags-Poison-Hub.lua"))()
 ]]
 
 print("Loadstring version for distribution: " .. loadstringVersion)
