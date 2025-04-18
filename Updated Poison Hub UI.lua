@@ -130,8 +130,8 @@ local RankData = {
     ["Poison Admin"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 0, 0), emoji = "⚡" },
     ["Poison VIP"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 215, 0), emoji = "💎" },
     ["Poison User"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(128, 0, 128), emoji = "☠️" },
-    ["Poison<3"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 105, 180), emoji = "❤" }
-    ["AK Owner"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(138, 43, 226), emoji = "👑" },
+    ["Poison<3"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 105, 180), emoji = "❤" },
+    ["AK Owner"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(138, 43, 226), emoji = "👑" }
 }
 
 local ChatWhitelist = {}
