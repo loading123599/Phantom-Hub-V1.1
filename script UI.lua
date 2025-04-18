@@ -1,4 +1,3 @@
-tag.AlwaysOn = executorsList = {Players.LocalPlayer.Name} = true
 
 -- Combined Script for Poison's Hub with BigBaseplate loading first
 
