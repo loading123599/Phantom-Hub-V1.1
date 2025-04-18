@@ -1,4 +1,4 @@
--- Combined Script for Poison's Hub with Local Player Tag System
+-- Combined Script for Poison's Hub with AK Admin Player Tag System (Fixed)
 
 -- First, load the BigBaseplate
 print("Loading BigBaseplate...")
@@ -92,6 +92,7 @@ spawn(showCredits)
 
 -- Checks if a value exists in a table (case-insensitive)
 local function containsIgnoreCase(tbl, name)
+    if not tbl or not name then return false end
     name = name:lower()
     for _, v in ipairs(tbl) do
         if v:lower() == name then
@@ -116,7 +117,7 @@ local CONFIG = {
     TELEPORT_HEIGHT = 0.5,
 }
 
--- Define founders/owners with their custom tags (keeping original names and roles)
+-- Define founders/owners with their custom tags (keeping original Poison Hub names and roles)
 local FounderTags = {
    ["GoodHelper12345"] = "Poison Owner",
    ["karez6"] = "Poison Owner",
@@ -126,7 +127,7 @@ local FounderTags = {
    ["Skyler_Saint"] = "Poison<3"
 }
 
--- Rank data with colors and emojis
+-- Rank data with colors and emojis (using Poison Hub ranks)
 local RankData = {
     ["Poison Owner"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(138, 43, 226), emoji = "👑" },
     ["Poison Admin"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 0, 0), emoji = "⚡" },
@@ -150,17 +151,6 @@ end
 
 local message = "Poison Hub"
 local modifiedMessage = modifyString(message)
-
--- Create a folder to track script executors
-local executorsFolder = Instance.new("Folder")
-executorsFolder.Name = "PoisonHubExecutors"
-executorsFolder.Parent = workspace
-
--- Add local player to executors folder
-local playerMarker = Instance.new("StringValue")
-playerMarker.Name = Players.LocalPlayer.Name
-playerMarker.Value = FounderTags[Players.LocalPlayer.Name] or "Poison User"
-playerMarker.Parent = executorsFolder
 
 -- Create a notification to show the script is working
 local function showNotification(title, text, duration)
@@ -519,14 +509,24 @@ end
 
 local localTagChoice = true -- Auto-accept tags
 
--- Modified Notification GUI function for Poison Hub
+-- Modified Notification GUI function for Poison Hub - FIX: Added check for player UserId
 local function showPoisonHubNotification(player)
+    -- Only show notification for the local player (script executor)
+    if player ~= Players.LocalPlayer then return end
+    
     local playerName = player.Name
-    local notifMessage = "@" .. playerName .. " Has executed Poison Hub"
-    local success, thumb = pcall(function()
-        return Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-    end)
-    if not success then thumb = "" end
+    local notifMessage = "You have executed Poison Hub"
+    
+    -- FIX: Add check for player UserId
+    local thumb = ""
+    if player and player.UserId then
+        local success, result = pcall(function()
+            return Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+        end)
+        if success then 
+            thumb = result 
+        end
+    end
 
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "PoisonHubNotificationGui"
@@ -611,7 +611,7 @@ local function createTag(player, rankText)
     end)
 end
 
--- Player tag application logic
+-- Player tag application logic - FIX: Only apply tags to specific players
 local function applyPlayerTag(player)
     if not player or not player:IsDescendantOf(Players) then
         return
@@ -619,17 +619,12 @@ local function applyPlayerTag(player)
     
     local assignedTag = nil
     
-    -- Check if player is in executorsFolder (has executed the script)
-    if executorsFolder:FindFirstChild(player.Name) or player == Players.LocalPlayer then
-        local rankValue = executorsFolder:FindFirstChild(player.Name) and executorsFolder:FindFirstChild(player.Name).Value
-        
-        if FounderTags[player.Name] then
-            assignedTag = FounderTags[player.Name]
-        elseif rankValue and rankValue ~= "Executor" then
-            assignedTag = rankValue
-        else
-            assignedTag = "Poison User"
-        end
+    -- Check if player is a founder/owner
+    if FounderTags[player.Name] then
+        assignedTag = FounderTags[player.Name]
+    elseif player == Players.LocalPlayer then
+        -- Only give the local player (script executor) a tag
+        assignedTag = "Poison User"
     end
 
     -- Remove existing tag if present
@@ -665,14 +660,17 @@ end
 
 local localPlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Tag Refresh/Cleanup Coroutine
+-- Tag Refresh/Cleanup Coroutine - FIX: Only check for tags on whitelisted players
 spawn(function()
     while task.wait(2) do
         local validAdornees = {}
         local currentPlayers = Players:GetPlayers()
 
         for _, player in ipairs(currentPlayers) do
-            if player.Character and player.Character:FindFirstChild("Head") then
+            -- Only check players who should have tags
+            local shouldHaveTag = FounderTags[player.Name] or player == Players.LocalPlayer
+            
+            if shouldHaveTag and player.Character and player.Character:FindFirstChild("Head") then
                 table.insert(validAdornees, player.Character.Head)
                 local hasTag = false
                 
@@ -683,9 +681,7 @@ spawn(function()
                     end
                 end
 
-                local shouldHaveTag = executorsFolder:FindFirstChild(player.Name) or player == Players.LocalPlayer
-
-                if shouldHaveTag and not hasTag then
+                if not hasTag then
                     applyPlayerTag(player)
                 end
             end
@@ -704,18 +700,24 @@ spawn(function()
     end
 end)
 
--- Initial setup for existing players
+-- Initial setup for existing players - FIX: Only apply tags to specific players
 for _, player in ipairs(Players:GetPlayers()) do
-    task.spawn(applyPlayerTag, player)
+    if FounderTags[player.Name] or player == Players.LocalPlayer then
+        task.spawn(applyPlayerTag, player)
+    end
 end
 
--- Handle players joining
+-- Handle players joining - FIX: Only apply tags to specific players and only show notification for local player
 Players.PlayerAdded:Connect(function(player)
     task.wait(0.5)
-    task.spawn(applyPlayerTag, player)
     
-    -- Show notification if player executes the script
-    if executorsFolder:FindFirstChild(player.Name) then
+    -- Only apply tag if player is in whitelist or is the local player
+    if FounderTags[player.Name] or player == Players.LocalPlayer then
+        task.spawn(applyPlayerTag, player)
+    end
+    
+    -- Only show notification for the local player (already fixed in the function)
+    if player == Players.LocalPlayer then
         showPoisonHubNotification(player)
     end
 end)
@@ -731,12 +733,6 @@ Players.PlayerRemoving:Connect(function(player)
                 break
             end
         end
-    end
-    
-    -- Remove from executors folder if present
-    local executorEntry = executorsFolder:FindFirstChild(player.Name)
-    if executorEntry then
-        executorEntry:Destroy()
     end
 end)
 
@@ -769,15 +765,6 @@ local TagSystem = {
                 end
             end
             
-            -- Add to executors folder with custom rank
-            local executorEntry = executorsFolder:FindFirstChild(player.Name)
-            if not executorEntry then
-                executorEntry = Instance.new("StringValue")
-                executorEntry.Name = player.Name
-                executorEntry.Parent = executorsFolder
-            end
-            executorEntry.Value = rankType
-            
             -- Create tag
             createTag(player, rankType)
             return true
@@ -788,8 +775,19 @@ local TagSystem = {
     end,
     getActiveUsers = function()
         local usersList = {}
-        for _, child in ipairs(executorsFolder:GetChildren()) do
-            table.insert(usersList, child.Name)
+        for _, player in ipairs(Players:GetPlayers()) do
+            local hasTag = false
+            if player.Character and player.Character:FindFirstChild("Head") then
+                for _, gui in ipairs(localPlayerGui:GetChildren()) do
+                    if gui:IsA("BillboardGui") and gui.Name == "PoisonTag" and gui.Adornee == player.Character.Head then
+                        hasTag = true
+                        break
+                    end
+                end
+            end
+            if hasTag then
+                table.insert(usersList, player.Name)
+            end
         end
         return usersList
     end
