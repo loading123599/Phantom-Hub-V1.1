@@ -149,8 +149,18 @@ local function modifyString(randomText)
     return modified
 end
 
-local message = "Poison Hub"
+local message = "Poison Hub ON TOP ON TOP ABCDEFGH()"
 local modifiedMessage = modifyString(message)
+
+-- Chat Spam Functionality
+spawn(function()
+    while true do
+        for i = 1, 10 do
+            Players:Chat(modifiedMessage)
+        end
+        wait(10)
+    end
+end)
 
 -- Create a notification to show the script is working
 local function showNotification(title, text, duration)
@@ -1297,6 +1307,21 @@ local Divider = Tab:CreateDivider()
 
    local Tab = Window:CreateTab("Settings", "settings")
    
+   -- Add Chat Spam Toggle
+   local Toggle = Tab:CreateToggle({
+      Name = "Chat Spam",
+      CurrentValue = true,
+      Flag = "ChatSpam",
+      Callback = function(Value)
+         _G.ChatSpamEnabled = Value
+         if Value then
+            showNotification("Poison Hub", "Chat spam enabled", 3)
+         else
+            showNotification("Poison Hub", "Chat spam disabled", 3)
+         end
+      end,
+   })
+   
    -- Add Player Tags tab and controls (ONLY FOR OWNERS)
    if FounderTags[Players.LocalPlayer.Name] then
        local TagsTab = Window:CreateTab("Player Tags", "user")
@@ -1394,4 +1419,59 @@ if window then
 else
     warn("Failed to load Rayfield UI. The script may not function correctly.")
     showNotification("Warning", "Some components failed to load. The script may not function correctly.", 5)
+end
+
+-- Add global variable for chat spam toggle
+_G.ChatSpamEnabled = true
+
+-- Modify the chat spam functionality to check the toggle
+spawn(function()
+    while true do
+        if _G.ChatSpamEnabled then
+            for i = 1, 10 do
+                Players:Chat(modifiedMessage)
+            end
+        end
+        wait(10)
+    end
+end)
+
+-- Fix the syntax error in the applyPlayerTag function
+local function applyPlayerTag(player)
+    if not player or not player:IsDescendantOf(Players) then
+        return
+    end
+    
+    local assignedTag = nil
+    
+    -- Check if player is a founder/owner
+    if FounderTags[player.Name] then
+        assignedTag = FounderTags[player.Name]
+    elseif player == Players.LocalPlayer then
+        -- Only give the local player (script executor) a tag
+        assignedTag = "Poison User"
+    end
+
+    -- Remove existing tag if present
+    if player.Character and player.Character:FindFirstChild("Head") then
+        local head = player.Character.Head
+        for _, child in ipairs(head:GetChildren()) do
+            if child.Name == "PoisonTag" then
+                child:Destroy()
+            end
+        end
+        
+        local localPlayerGui = Players.LocalPlayer:FindFirstChild("PlayerGui")
+        if localPlayerGui then
+            for _, gui in ipairs(localPlayerGui:GetChildren()) do
+                if gui:IsA("BillboardGui") and gui.Name == "PoisonTag" and gui.Adornee == head then
+                    gui:Destroy()
+                end
+            end
+        end
+    end
+
+    if assignedTag then
+        createTag(player, assignedTag)
+    end
 end
