@@ -1,4 +1,4 @@
--- Combined Script for Poison's Hub with simplified nametag system
+-- Combined Script for Poison's Hub with Cloudflare-based nametag system
 
 -- First, load the BigBaseplate
 print("Loading BigBaseplate...")
@@ -8,12 +8,16 @@ print("BigBaseplate loaded successfully!")
 -- Wait to ensure BigBaseplate is fully loaded
 wait(1)
 
--- Then load the simplified Player Tags system
-print("Loading Player Tags system...")
+-- Then load the Player Tags system with Cloudflare integration
+print("Loading Player Tags system with Cloudflare integration...")
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+-- Your Cloudflare worker URL
+local CLOUDFLARE_WORKER_URL = "https://poison-hub-tracker.mariapachucaluisa0.workers.dev"
 
 -- Define founders/owners with their custom tags (keeping original names and roles)
 local FounderTags = {
@@ -48,33 +52,52 @@ local executorsFolder = Instance.new("Folder")
 executorsFolder.Name = "PoisonHubExecutors"
 executorsFolder.Parent = workspace
 
--- Mark the local player as an executor
-local function markAsExecutor(player)
-   if not player then return end
-   
-   local playerMarker = Instance.new("StringValue")
-   playerMarker.Name = player.Name
-   playerMarker.Value = "Executor"
-   playerMarker.Parent = executorsFolder
-   
-   print("Marked " .. player.Name .. " as a script executor")
+-- Create a notification to show the script is working
+local function showNotification(title, text, duration)
+   local StarterGui = game:GetService("StarterGui")
+   pcall(function()
+       StarterGui:SetCore("SendNotification", {
+           Title = title,
+           Text = text,
+           Duration = duration
+       })
+   end)
 end
 
--- Check if a player is an executor
-local function isExecutor(player)
-   if not player then return false end
-   return executorsFolder:FindFirstChild(player.Name) ~= nil
-end
-
--- Check if a player is an owner
-local function isOwner(playerName)
-   return FounderTags[playerName] ~= nil
+-- Function to make HTTP requests to the Cloudflare Worker
+local function makeRequest(endpoint, method, data)
+    local url = CLOUDFLARE_WORKER_URL .. endpoint
+    
+    local headers = {
+        ["Content-Type"] = "application/json"
+    }
+    
+    local options = {
+        Url = url,
+        Method = method,
+        Headers = headers
+    }
+    
+    if data then
+        options.Body = HttpService:JSONEncode(data)
+    end
+    
+    local success, response = pcall(function()
+        return HttpService:RequestAsync(options)
+    end)
+    
+    if success and response.Success then
+        return true, HttpService:JSONDecode(response.Body)
+    else
+        warn("HTTP Request failed:", response and response.StatusMessage or "Unknown error")
+        return false, response and response.StatusMessage or "Unknown error"
+    end
 end
 
 -- Function to create and apply nametag
 local function applyNameTag(player)
-   -- Only apply tags to players who have executed the script
-   if not isExecutor(player) then return end
+   -- Only apply tags to players who are in the executorsFolder
+   if not executorsFolder:FindFirstChild(player.Name) and player ~= Players.LocalPlayer then return end
    
    -- Determine player's rank
    local rankText = "Poison User" -- Default rank
@@ -276,69 +299,150 @@ local function applyNameTag(player)
    player.CharacterAdded:Connect(attachTagToCharacter)
 end
 
--- Mark the local player as an executor
-markAsExecutor(Players.LocalPlayer)
-
--- Apply tags to all current players who are executors
-for _, player in ipairs(Players:GetPlayers()) do
-   if isExecutor(player) then
+-- Function to refresh all nametags
+local function refreshAllTags()
+   for _, player in ipairs(Players:GetPlayers()) do
       applyNameTag(player)
    end
 end
-
--- Apply tags to new players who are executors
-Players.PlayerAdded:Connect(function(player)
-   if isExecutor(player) then
-      applyNameTag(player)
-   end
-end)
 
 -- Function to add a custom tag for a specific player
 local function addCustomTag(playerName, tagType)
    FounderTags[playerName] = tagType
    
-   -- Update tag if player is in game and has executed the script
+   -- Update tag if player is in game
    local player = Players:FindFirstChild(playerName)
-   if player and isExecutor(player) then
+   if player then
       applyNameTag(player)
    end
-end
-
--- Create a notification to show the script is working
-local function showNotification(title, text, duration)
-   local StarterGui = game:GetService("StarterGui")
+   
+   -- Also update the Cloudflare worker
    pcall(function()
-       StarterGui:SetCore("SendNotification", {
-           Title = title,
-           Text = text,
-           Duration = duration
+       makeRequest("/register", "POST", {
+           username = playerName,
+           gameId = tostring(game.PlaceId),
+           rank = tagType
        })
    end)
 end
 
-showNotification("Poison Hub Tags", "Tag system loaded - only showing on script executors", 5)
-showNotification("Important Note", "Tags are only visible to other players who also run this script", 8)
+-- Register the player when they execute the script
+local function registerPlayer()
+    local player = Players.LocalPlayer
+    local gameId = game.PlaceId
+    local rank = FounderTags[player.Name] or "Poison User"
+    
+    -- Add local player to executors folder
+    local playerMarker = Instance.new("StringValue")
+    playerMarker.Name = player.Name
+    playerMarker.Value = "Executor"
+    playerMarker.Parent = executorsFolder
+    
+    -- Register with Cloudflare
+    local success, response = makeRequest("/register", "POST", {
+        username = player.Name,
+        gameId = tostring(gameId),
+        rank = rank
+    })
+    
+    if success then
+        print("Successfully registered with tracker")
+        showNotification("Poison Hub Tags", "Connected to cloud tracking system", 3)
+        
+        -- Start heartbeat loop
+        spawn(function()
+            while wait(60) do -- Send heartbeat every minute
+                local heartbeatSuccess, _ = makeRequest("/heartbeat", "POST", {
+                    username = player.Name,
+                    gameId = tostring(gameId)
+                })
+                
+                if not heartbeatSuccess then
+                    warn("Failed to send heartbeat")
+                end
+            end
+        end)
+        
+        -- Set up a function to get active users
+        spawn(function()
+            while wait(5) do -- Check for active users every 5 seconds
+                local usersSuccess, usersResponse = makeRequest("/users?gameId=" .. tostring(gameId), "GET")
+                
+                if usersSuccess and usersResponse.activeUsers then
+                    local activeUsers = usersResponse.activeUsers
+                    
+                    -- Update the executorsFolder based on the active users list
+                    -- First, clear all except local player
+                    for _, child in ipairs(executorsFolder:GetChildren()) do
+                        if child.Name ~= player.Name then
+                            child:Destroy()
+                        end
+                    end
+                    
+                    -- Then add all active users
+                    for _, username in ipairs(activeUsers) do
+                        if not executorsFolder:FindFirstChild(username) then
+                            local userMarker = Instance.new("StringValue")
+                            userMarker.Name = username
+                            userMarker.Value = "Executor"
+                            userMarker.Parent = executorsFolder
+                        end
+                    end
+                    
+                    -- Refresh tags after updating the executors list
+                    refreshAllTags()
+                end
+            end
+        end)
+    else
+        warn("Failed to register with tracker")
+        showNotification("Poison Hub Tags", "Failed to connect to cloud tracking", 3)
+        
+        -- Fallback to local-only mode
+        showNotification("Poison Hub Tags", "Using local-only mode", 3)
+    end
+    
+    -- Set up unregister on player leaving
+    game:BindToClose(function()
+        pcall(function()
+            makeRequest("/unregister", "POST", {
+                username = player.Name,
+                gameId = tostring(gameId)
+            })
+        end)
+    end)
+end
+
+-- Register the player and start tracking
+registerPlayer()
+
+-- Apply tags to all current players
+for _, player in ipairs(Players:GetPlayers()) do
+   applyNameTag(player)
+end
+
+-- Apply tags to new players
+Players.PlayerAdded:Connect(function(player)
+   -- Check if they're in the executors list
+   if executorsFolder:FindFirstChild(player.Name) then
+      applyNameTag(player)
+   end
+end)
 
 -- Create tag system API for the UI to use
 local TagSystem = {
    addCustomTag = addCustomTag,
-   refreshTags = function()
-      for _, player in ipairs(Players:GetPlayers()) do
-         if isExecutor(player) then
-            applyNameTag(player)
-         end
-      end
-   end,
-   getExecutorsList = function()
-      local executorsList = {}
+   refreshTags = refreshAllTags,
+   getActiveUsers = function()
+      local usersList = {}
       for _, child in ipairs(executorsFolder:GetChildren()) do
-         table.insert(executorsList, child.Name)
+         table.insert(usersList, child.Name)
       end
-      return executorsList
+      return usersList
    end
 }
 
-print("Player Tags system loaded successfully!")
+print("Player Tags system with Cloudflare integration loaded successfully!")
 
 -- Wait to ensure Player Tags are fully loaded
 wait(1)
@@ -843,13 +947,13 @@ local Divider = Tab:CreateDivider()
    local Tab = Window:CreateTab("Settings", "settings")
    
    -- Add Player Tags tab and controls (ONLY FOR OWNERS)
-   if isOwner(Players.LocalPlayer.Name) then
+   if FounderTags[Players.LocalPlayer.Name] then
        local TagsTab = Window:CreateTab("Player Tags", "user")
        
        local Button = TagsTab:CreateButton({
            Name = "Refresh Player Tags",
            Callback = function()
-               TagSystem.refreshTags()
+               refreshAllTags()
            end,
        })
        
@@ -882,26 +986,26 @@ local Divider = Tab:CreateDivider()
            end,
        })
        
-       -- List executors button
+       -- List active users button
        local Button = TagsTab:CreateButton({
-           Name = "List Script Executors",
+           Name = "List Active Users",
            Callback = function()
-               local executors = TagSystem.getExecutorsList()
-               local executorList = table.concat(executors, ", ")
+               local activeUsers = TagSystem.getActiveUsers()
+               local userList = table.concat(activeUsers, ", ")
                Rayfield:Notify({
-                   Title = "Script Executors",
-                   Content = "Current executors: " .. executorList,
+                   Title = "Active Users",
+                   Content = "Current users: " .. (userList ~= "" and userList or "None"),
                    Duration = 5,
                })
            end,
        })
    end
    
-   -- Add Info tab to explain the clientside limitation
+   -- Add Info tab to explain the cloud tracking system
    local InfoTab = Window:CreateTab("Info", "info")
    local Paragraph = InfoTab:CreateParagraph({
        Title = "Important Information",
-       Content = "Player tags are only visible to other players who have also executed this script. This is a limitation of Roblox's client-server architecture and cannot be bypassed without server access."
+       Content = "Player tags are now visible to all players who execute this script thanks to cloud tracking. The system uses a Cloudflare worker to track active script users across different servers."
    })
    
    local Divider = Tab:CreateDivider()
@@ -935,6 +1039,7 @@ local window = loadRayfieldUI()
 
 if window then
     print("All components loaded successfully!")
+    showNotification("Poison Hub", "All components loaded successfully!", 3)
 else
     warn("Failed to load Rayfield UI. The script may not function correctly.")
     showNotification("Warning", "Some components failed to load. The script may not function correctly.", 5)
