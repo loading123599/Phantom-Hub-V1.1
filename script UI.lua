@@ -17,6 +17,79 @@ local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local TextService = game:GetService("TextService")
 
+-- Show credits notification
+local function showCredits()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "CreditsGui"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    if game:GetService("RunService"):IsStudio() then
+        screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    else
+        screenGui.Parent = game.CoreGui
+    end
+    
+    local frame = Instance.new("Frame")
+    frame.Name = "CreditsFrame"
+    frame.Size = UDim2.new(0, 350, 0, 100)
+    frame.Position = UDim2.new(0.5, -175, 0, -100) -- Start off-screen
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.BackgroundTransparency = 0.2
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = frame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(138, 43, 226) -- Purple
+    stroke.Thickness = 2
+    stroke.Parent = frame
+    
+    local title = Instance.new("TextLabel")
+    title.Name = "Title"
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Position = UDim2.new(0, 0, 0, 10)
+    title.BackgroundTransparency = 1
+    title.Font = Enum.Font.GothamBold
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextSize = 18
+    title.Text = "Credits"
+    title.Parent = frame
+    
+    local message = Instance.new("TextLabel")
+    message.Name = "Message"
+    message.Size = UDim2.new(1, -20, 0, 60)
+    message.Position = UDim2.new(0, 10, 0, 40)
+    message.BackgroundTransparency = 1
+    message.Font = Enum.Font.Gotham
+    message.TextColor3 = Color3.fromRGB(255, 255, 255)
+    message.TextSize = 14
+    message.TextWrapped = true
+    message.Text = "All credits go to AK ADMIN, join their server\ndiscord.gg/akadmin"
+    message.Parent = frame
+    
+    -- Slide in animation
+    local tweenIn = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+        {Position = UDim2.new(0.5, -175, 0, 20)})
+    tweenIn:Play()
+    
+    -- Wait 10 seconds then slide out
+    spawn(function()
+        wait(10)
+        local tweenOut = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), 
+            {Position = UDim2.new(0.5, -175, 0, -100)})
+        tweenOut:Play()
+        tweenOut.Completed:Wait()
+        screenGui:Destroy()
+    end)
+end
+
+-- Show credits when script loads
+spawn(showCredits)
+
 -- Checks if a value exists in a table (case-insensitive)
 local function containsIgnoreCase(tbl, name)
     name = name:lower()
@@ -1285,7 +1358,7 @@ local Divider = Tab:CreateDivider()
    local InfoTab = Window:CreateTab("Info", "info")
    local Paragraph = InfoTab:CreateParagraph({
        Title = "Important Information",
-       Content = "Player tags are only visible to you. Other players who execute this script will see their own version of the tags. This is a client-side feature."
+       Content = "Player tags are only visible to you. Other players who execute this script will see their own version of the tags. This is a client-side feature.\n\nAll credits go to AK ADMIN, join their server: discord.gg/akadmin"
    })
    
    local Divider = Tab:CreateDivider()
