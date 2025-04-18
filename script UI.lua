@@ -124,7 +124,8 @@ local FounderTags = {
    ["nagerboyloading"] = "Poison Owner",
    ["1can3uss"] = "Poison Owner",
    ["auralinker"] = "Poison Admin",
-   ["Skyler_Saint"] = "Poison<3"
+   ["Skyler_Saint"] = "Poison<3",
+    ["Dode073"] = "Poison VIP",
 }
 
 -- Rank data with colors and emojis (using Poison Hub ranks)
