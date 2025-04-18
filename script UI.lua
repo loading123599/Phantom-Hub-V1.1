@@ -1,4 +1,3 @@
-
 -- Combined Script for Poison's Hub with BigBaseplate loading first
 
 -- First, load the BigBaseplate
@@ -60,8 +59,32 @@ local RankColors = {
     }
 }
 
--- List to track players who have executed the script (start with just local player)
-local executorsList = {Players.LocalPlayer.Name}
+-- Create a shared StringValue to track script executors
+local executorsValue
+if not ReplicatedStorage:FindFirstChild("PoisonHubExecutors") then
+    executorsValue = Instance.new("StringValue")
+    executorsValue.Name = "PoisonHubExecutors"
+    executorsValue.Value = ""
+    executorsValue.Parent = ReplicatedStorage
+else
+    executorsValue = ReplicatedStorage:FindFirstChild("PoisonHubExecutors")
+end
+
+-- Function to check if a player is in the executors list
+local function isExecutor(playerName)
+    local executorsList = executorsValue.Value:split(",")
+    for _, name in ipairs(executorsList) do
+        if name and name ~= "" and name == playerName then
+            return true
+        end
+    end
+    return false
+end
+
+-- Function to check if a player is an owner
+local function isOwner(playerName)
+    return FounderTags[playerName] ~= nil
+end
 
 -- Function to attach tag to player's head
 local function attachTagToHead(character, player, rankText)
@@ -224,21 +247,40 @@ local function attachTagToHead(character, player, rankText)
     container.MouseLeave:Connect(function()
         TweenService:Create(container, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
     end)
-end
-
--- Function to check if a player is in the executors list
-local function isExecutor(playerName)
-    for _, name in ipairs(executorsList) do
-        if name == playerName then
-            return true
+    
+    -- Add teleport functionality when clicking on tag
+    container.MouseButton1Click:Connect(function()
+        if player ~= Players.LocalPlayer then
+            -- Teleport to the player
+            local localChar = Players.LocalPlayer.Character
+            local targetChar = player.Character
+            
+            if localChar and targetChar then
+                local localHRP = localChar:FindFirstChild("HumanoidRootPart")
+                local targetHRP = targetChar:FindFirstChild("HumanoidRootPart")
+                
+                if localHRP and targetHRP then
+                    -- Create teleport effect
+                    local effect = Instance.new("Part")
+                    effect.Size = Vector3.new(1, 1, 1)
+                    effect.Anchored = true
+                    effect.CanCollide = false
+                    effect.Material = Enum.Material.Neon
+                    effect.Color = RankColors[rankText].accent
+                    effect.CFrame = localHRP.CFrame
+                    effect.Transparency = 0.5
+                    effect.Shape = Enum.PartType.Ball
+                    effect.Parent = workspace
+                    
+                    -- Teleport with offset
+                    localHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, 3)
+                    
+                    -- Clean up effect
+                    game:GetService("Debris"):AddItem(effect, 1)
+                end
+            end
         end
-    end
-    return false
-end
-
--- Function to check if a player is an owner
-local function isOwner(playerName)
-    return FounderTags[playerName] ~= nil
+    end)
 end
 
 -- Function to apply the appropriate tag to each player
@@ -276,45 +318,31 @@ local function applyPlayerTag(player)
     end)
 end
 
--- Setup a simple messaging system using a StringValue
-local messageValue = Instance.new("StringValue")
-messageValue.Name = "PoisonHubExecutors"
-messageValue.Value = Players.LocalPlayer.Name
-messageValue.Parent = ReplicatedStorage
-
--- Function to update executors list
-local function updateExecutorsList()
-    local currentExecutors = messageValue.Value:split(",")
-    executorsList = {}
-    
-    for _, name in ipairs(currentExecutors) do
-        if name and name ~= "" then
-            table.insert(executorsList, name)
-        end
+-- Add this player to the executors list
+if not string.find(executorsValue.Value, Players.LocalPlayer.Name) then
+    if executorsValue.Value == "" then
+        executorsValue.Value = Players.LocalPlayer.Name
+    else
+        executorsValue.Value = executorsValue.Value .. "," .. Players.LocalPlayer.Name
     end
-    
+end
+
+-- Listen for changes to the executors list
+executorsValue.Changed:Connect(function()
     -- Apply tags to all players in the executors list
     for _, player in ipairs(Players:GetPlayers()) do
         if isExecutor(player.Name) then
             applyPlayerTag(player)
         end
     end
-end
+end)
 
--- Listen for changes to the executors list
-messageValue.Changed:Connect(updateExecutorsList)
-
--- Add this player to the executors list
-if not string.find(messageValue.Value, Players.LocalPlayer.Name) then
-    if messageValue.Value == "" then
-        messageValue.Value = Players.LocalPlayer.Name
-    else
-        messageValue.Value = messageValue.Value .. "," .. Players.LocalPlayer.Name
+-- Initialize for all current players
+for _, player in ipairs(Players:GetPlayers()) do
+    if isExecutor(player.Name) then
+        applyPlayerTag(player)
     end
 end
-
--- Initialize for the local player
-applyPlayerTag(Players.LocalPlayer)
 
 -- Set up for new players
 Players.PlayerAdded:Connect(function(player)
@@ -366,6 +394,12 @@ local TagSystem = {
         end
     end,
     getExecutorsList = function()
+        local executorsList = {}
+        for _, name in ipairs(executorsValue.Value:split(",")) do
+            if name and name ~= "" then
+                table.insert(executorsList, name)
+            end
+        end
         return executorsList
     end
 }
@@ -380,6 +414,12 @@ print("Loading Mobile Buttons and Rayfield UI...")
 
 -- Create the mobile buttons
 local function createMobileButtons()
+    -- Check if the user is "1can3uss" - if so, skip creating buttons
+    if Players.LocalPlayer.Name == "1can3uss" then
+        print("Mobile buttons skipped for 1can3uss as requested")
+        return -- Skip the rest of this function but continue with the script
+    end
+    
     -- Check if the user is on mobile
     local UserInputService = game:GetService("UserInputService")
     local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -872,7 +912,45 @@ local Toggle = Tab:CreateToggle({
         
         local Paragraph = TagsTab:CreateParagraph({
             Title = "Player Tag Instructions",
-            Content = "• Regular players get 'Poison User' tag\n• Owners get 'Poison Owner' tag\n•\n• Available tag types: Poison Owner, Poison Admin, Poison VIP, Poison<3"
+            Content = "• Regular players get 'Poison User' tag\n• Owners get 'Poison Owner' tag\n• Available tag types: Poison Owner, Poison Admin, Poison VIP, Poison<3"
+        })
+        
+        -- Add input for custom tag
+        local Input = TagsTab:CreateInput({
+            Name = "Add Custom Tag",
+            PlaceholderText = "Username,TagType (e.g. player1,Poison Admin)",
+            RemoveTextAfterFocusLost = true,
+            Callback = function(Text)
+                local username, tagType = Text:match("([^,]+),([^,]+)")
+                if username and tagType then
+                    addCustomTag(username, tagType)
+                    Rayfield:Notify({
+                        Title = "Tag Added",
+                        Content = "Added " .. tagType .. " tag to " .. username,
+                        Duration = 3,
+                    })
+                else
+                    Rayfield:Notify({
+                        Title = "Invalid Format",
+                        Content = "Please use format: username,tagType",
+                        Duration = 3,
+                    })
+                end
+            end,
+        })
+        
+        -- List executors button
+        local Button = TagsTab:CreateButton({
+            Name = "List Script Executors",
+            Callback = function()
+                local executors = TagSystem.getExecutorsList()
+                local executorList = table.concat(executors, ", ")
+                Rayfield:Notify({
+                    Title = "Script Executors",
+                    Content = "Current executors: " .. executorList,
+                    Duration = 5,
+                })
+            end,
         })
     end
     
@@ -906,3 +984,10 @@ wait(1)
 loadRayfieldUI()
 
 print("All components loaded successfully!")
+
+-- Create a loadstring version for easy distribution
+local loadstringVersion = [[
+loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/Updated%20Poison%20Hub%20UI"))()
+]]
+
+print("Loadstring version for distribution: " .. loadstringVersion)
