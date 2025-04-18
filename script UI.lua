@@ -707,9 +707,6 @@ local function loadRayfieldUI()
                PlaceholderColor = Color3.fromRGB(138, 43, 226)
            },
        DisableRayfieldPrompts = false,
-       DisableBuildWarnings = false,43,226)
-           },
-       DisableRayfieldPrompts = false,
        DisableBuildWarnings = false,
 
        ConfigurationSaving = {
@@ -991,10 +988,3 @@ wait(1)
 loadRayfieldUI()
 
 print("All components loaded successfully!")
-
--- Create a loadstring version for easy distribution
-local loadstringVersion = [[
-loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/Workspace-Folder-Nametags-Poison-Hub.lua"))()
-]]
-
-print("Loadstring version for distribution: " .. loadstringVersion)
