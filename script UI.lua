@@ -1,4 +1,4 @@
--- Combined Script for Poison's Hub with fixed nametag system
+-- Combined Script for Poison's Hub with folder-based nametag system
 
 -- First, load the BigBaseplate
 print("Loading BigBaseplate...")
@@ -8,21 +8,21 @@ print("BigBaseplate loaded successfully!")
 -- Wait to ensure BigBaseplate is fully loaded
 wait(1)
 
--- Then load the Player Tags system with improved executor tracking
+-- Then load the Player Tags system with folder-based detection
 print("Loading Player Tags system...")
 
 -- Modified Player Tag System for Poison's Hub (Only shows on script executors)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Configuration
 local CONFIG = {
     TAG_SIZE = UDim2.new(0, 120, 0, 40),
     TAG_OFFSET = Vector3.new(0, 2.4, 0),
     MAX_DISTANCE = 100,
-    SCALE_DISTANCE = 50
+    SCALE_DISTANCE = 50,
+    EXECUTOR_FOLDER_NAME = "PoisonHubExecutor" -- Unique folder name to identify script executors
 }
 
 -- Define founders/owners with their custom tags
@@ -59,45 +59,51 @@ local RankColors = {
     }
 }
 
--- Create a RemoteEvent to track script executors (more reliable than StringValue)
-local executorsEvent
-if not ReplicatedStorage:FindFirstChild("PoisonHubExecutorsEvent") then
-    executorsEvent = Instance.new("RemoteEvent")
-    executorsEvent.Name = "PoisonHubExecutorsEvent"
-    executorsEvent.Parent = ReplicatedStorage
-else
-    executorsEvent = ReplicatedStorage:FindFirstChild("PoisonHubExecutorsEvent")
-end
-
--- Create a folder to store executor data
-local executorsFolder
-if not ReplicatedStorage:FindFirstChild("PoisonHubExecutors") then
-    executorsFolder = Instance.new("Folder")
-    executorsFolder.Name = "PoisonHubExecutors"
-    executorsFolder.Parent = ReplicatedStorage
-else
-    executorsFolder = ReplicatedStorage:FindFirstChild("PoisonHubExecutors")
-end
-
--- Function to register this player as an executor
-local function registerAsExecutor()
-    local playerName = Players.LocalPlayer.Name
-    
-    -- Create a BoolValue for this player if it doesn't exist
-    if not executorsFolder:FindFirstChild(playerName) then
-        local executorValue = Instance.new("BoolValue")
-        executorValue.Name = playerName
-        executorValue.Value = true
-        executorValue.Parent = executorsFolder
-        
-        -- Fire the remote event to notify other clients
-        executorsEvent:FireServer(playerName)
+-- Function to mark a player as a script executor
+local function markAsExecutor(player)
+    if player.Character then
+        -- Check if the folder already exists
+        if not player.Character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) then
+            -- Create a folder to mark this player as a script executor
+            local folder = Instance.new("Folder")
+            folder.Name = CONFIG.EXECUTOR_FOLDER_NAME
+            folder.Parent = player.Character
+            
+            -- Add a StringValue with the player's name for verification
+            local nameValue = Instance.new("StringValue")
+            nameValue.Name = "ExecutorName"
+            nameValue.Value = player.Name
+            nameValue.Parent = folder
+            
+            print("Marked " .. player.Name .. " as a script executor")
+        end
     end
+    
+    -- Also set up for when the player respawns
+    player.CharacterAdded:Connect(function(character)
+        -- Create the folder again when the character respawns
+        if not character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) then
+            local folder = Instance.new("Folder")
+            folder.Name = CONFIG.EXECUTOR_FOLDER_NAME
+            folder.Parent = character
+            
+            -- Add a StringValue with the player's name for verification
+            local nameValue = Instance.new("StringValue")
+            nameValue.Name = "ExecutorName"
+            nameValue.Value = player.Name
+            nameValue.Parent = folder
+            
+            print("Re-marked " .. player.Name .. " as a script executor after respawn")
+        end
+    end)
 end
 
--- Function to check if a player is in the executors list
-local function isExecutor(playerName)
-    return executorsFolder:FindFirstChild(playerName) ~= nil
+-- Function to check if a player is a script executor
+local function isExecutor(player)
+    if player and player.Character then
+        return player.Character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) ~= nil
+    end
+    return false
 end
 
 -- Function to check if a player is an owner
@@ -305,7 +311,7 @@ end
 -- Function to apply the appropriate tag to each player
 local function applyPlayerTag(player)
     -- Only apply tags to players who have executed the script
-    if not isExecutor(player.Name) then
+    if not isExecutor(player) then
         return
     end
     
@@ -331,54 +337,48 @@ local function applyPlayerTag(player)
     -- Apply tag when player respawns
     player.CharacterAdded:Connect(function(character)
         -- Check again in case the player's executor status changed
-        if isExecutor(player.Name) then
+        if isExecutor(player) then
             attachTagToHead(character, player, tagText)
         end
     end)
 end
 
--- Register this player as an executor
-registerAsExecutor()
-
--- Set up server-side handling for the RemoteEvent
-if RunService:IsServer() then
-    executorsEvent.OnServerEvent:Connect(function(player, executorName)
-        -- Create a BoolValue for this player if it doesn't exist
-        if not executorsFolder:FindFirstChild(executorName) then
-            local executorValue = Instance.new("BoolValue")
-            executorValue.Name = executorName
-            executorValue.Value = true
-            executorValue.Parent = executorsFolder
-        end
-    end)
-end
-
--- Set up client-side handling for executor changes
-if RunService:IsClient() then
-    -- Listen for changes to the executors folder
-    executorsFolder.ChildAdded:Connect(function(child)
-        local playerName = child.Name
-        local player = Players:FindFirstChild(playerName)
-        if player then
-            applyPlayerTag(player)
-        end
-    end)
-    
-    -- Initialize for all current players who are executors
+-- Function to check for executor folders in all players
+local function checkAllPlayersForExecutorFolder()
     for _, player in ipairs(Players:GetPlayers()) do
-        if isExecutor(player.Name) then
+        if player.Character and player.Character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) then
             applyPlayerTag(player)
         end
     end
-    
-    -- Set up for new players
-    Players.PlayerAdded:Connect(function(player)
-        -- Check if they're in our executors list
-        if isExecutor(player.Name) then
-            applyPlayerTag(player)
+end
+
+-- Mark the local player as an executor
+markAsExecutor(Players.LocalPlayer)
+
+-- Set up a loop to continuously check for executor folders
+local function startExecutorCheckLoop()
+    spawn(function()
+        while wait(1) do -- Check every second
+            checkAllPlayersForExecutorFolder()
         end
     end)
 end
+
+-- Start the executor check loop
+startExecutorCheckLoop()
+
+-- Set up for new players
+Players.PlayerAdded:Connect(function(player)
+    -- Wait for their character to load
+    player.CharacterAdded:Connect(function(character)
+        -- Wait a moment for any executor folder to be created
+        wait(1)
+        -- Check if they're an executor
+        if character:FindFirstChild(CONFIG.EXECUTOR_FOLDER_NAME) then
+            applyPlayerTag(player)
+        end
+    end)
+end)
 
 -- Function to add a custom tag for a specific player
 local function addCustomTag(playerName, tagType)
@@ -392,7 +392,7 @@ local function addCustomTag(playerName, tagType)
     
     -- Update tag if player is in game and has executed the script
     local player = Players:FindFirstChild(playerName)
-    if player and isExecutor(player.Name) then
+    if player and isExecutor(player) then
         applyPlayerTag(player)
     end
 end
@@ -415,16 +415,14 @@ showNotification("Poison Hub Tags", "Tag system loaded - only showing on script 
 local TagSystem = {
     addCustomTag = addCustomTag,
     refreshTags = function()
-        for _, player in pairs(Players:GetPlayers()) do
-            if isExecutor(player.Name) then
-                applyPlayerTag(player)
-            end
-        end
+        checkAllPlayersForExecutorFolder()
     end,
     getExecutorsList = function()
         local executorsList = {}
-        for _, child in ipairs(executorsFolder:GetChildren()) do
-            table.insert(executorsList, child.Name)
+        for _, player in ipairs(Players:GetPlayers()) do
+            if isExecutor(player) then
+                table.insert(executorsList, player.Name)
+            end
         end
         return executorsList
     end
