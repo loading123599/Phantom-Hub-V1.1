@@ -15,17 +15,25 @@ print("Loading Player Tags system...")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
 
 -- Configuration
 local CONFIG = {
-    TAG_SIZE = UDim2.new(0, 120, 0, 40),
-    TAG_OFFSET = Vector3.new(0, 2.4, 0),
-    MAX_DISTANCE = 100,
-    SCALE_DISTANCE = 50,
+    TAG_SIZE = UDim2.new(0, 0, 0, 32),  -- height only, width will be dynamic
+    TAG_OFFSET = Vector3.new(0, 2.0, 0),
+    MAX_DISTANCE = 200000,
+    DISTANCE_THRESHOLD = 50,      -- when player backs away 50 studs, tag minimizes
+    HYSTERESIS = 5,               -- only switch state when crossing 45 studs on the way back (50-5)
+    CORNER_RADIUS = UDim.new(0, 10),
+    PARTICLE_COUNT = 20,         -- increased particle count
+    PARTICLE_SPEED = 2,
+    GLOW_INTENSITY = 0.3,
+    TELEPORT_DISTANCE = 5,
+    TELEPORT_HEIGHT = 0.5,
     EXECUTOR_FOLDER_NAME = "PoisonHubExecutors" -- Folder in workspace to store executor data
 }
 
--- Define founders/owners with their custom tags
+-- Define founders/owners with their custom tags (keeping original names and roles)
 local FounderTags = {
     ["GoodHelper12345"] = true,              -- Will get "Poison Owner" tag
     ["karez6"] = true,                       -- Will get "Poison Owner" tag
@@ -39,23 +47,28 @@ local FounderTags = {
 local RankColors = {
     ["Poison Owner"] = {
         primary = Color3.fromRGB(20, 20, 20),   -- Black background
-        accent = Color3.fromRGB(138, 43, 226)   -- Purple accent
+        accent = Color3.fromRGB(138, 43, 226),  -- Purple accent
+        emoji = "👑"                            -- Crown emoji for owners
     },
     ["Poison User"] = {
         primary = Color3.fromRGB(20, 20, 20),   -- Black background
-        accent = Color3.fromRGB(128, 0, 128)    -- Darker Purple accent
+        accent = Color3.fromRGB(128, 0, 128),   -- Darker Purple accent
+        emoji = "☠️"                            -- Poison symbol for regular users
     },
     ["Poison Admin"] = {
         primary = Color3.fromRGB(20, 20, 20),   -- Black background
-        accent = Color3.fromRGB(255, 0, 0)      -- Red accent
+        accent = Color3.fromRGB(255, 0, 0),     -- Red accent
+        emoji = "⚡"                            -- Lightning emoji for admins
     },
     ["Poison VIP"] = {
         primary = Color3.fromRGB(20, 20, 20),   -- Black background
-        accent = Color3.fromRGB(255, 215, 0)    -- Gold accent
+        accent = Color3.fromRGB(255, 215, 0),   -- Gold accent
+        emoji = "💎"                            -- Diamond emoji for VIPs
     },
     ["Poison<3"] = {
         primary = Color3.fromRGB(20, 20, 20),   -- Black background
-        accent = Color3.fromRGB(255, 105, 180)  -- Pink accent
+        accent = Color3.fromRGB(255, 105, 180), -- Pink accent
+        emoji = "❤"                             -- Heart emoji for Poison<3
     }
 }
 
@@ -98,6 +111,124 @@ local function isOwner(playerName)
     return FounderTags[playerName] ~= nil
 end
 
+-- Create basic particle frames
+local function createParticles(tag, parent, accentColor)
+    for i = 1, CONFIG.PARTICLE_COUNT do
+        local particle = Instance.new("Frame")
+        particle.Name = "Particle_" .. i
+        -- Randomize initial size more
+        particle.Size = UDim2.new(0, math.random(1, 6), 0, math.random(1, 6))
+        -- Randomize starting position across entire width and add some random offset
+        particle.Position = UDim2.new(math.random(), math.random(-10, 10), 1 + math.random() * 0.5, 0)
+        particle.BackgroundColor3 = accentColor
+        particle.BackgroundTransparency = math.random(0, 0.4)  -- Random initial transparency
+        particle.BorderSizePixel = 0
+        local pCorner = Instance.new("UICorner")
+        pCorner.CornerRadius = UDim.new(1, 0)
+        pCorner.Parent = particle
+        particle.Parent = parent
+
+        spawn(function()
+            while tag and tag.Parent do
+                -- More random starting positions
+                local startX = math.random()
+                local startOffsetX = math.random(-10, 10)
+                particle.Position = UDim2.new(startX, startOffsetX, 1 + math.random() * 0.5, 0)
+                particle.Size = UDim2.new(0, math.random(1, 6), 0, math.random(1, 6))
+                particle.BackgroundTransparency = math.random(0, 0.4)
+                
+                -- Randomize particle movement
+                local duration = math.random(10, 40) / (CONFIG.PARTICLE_SPEED * 10)
+                local endX = startX + (math.random() - 0.5) * 0.3  -- Random horizontal drift
+                local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+                
+                local tween = TweenService:Create(particle, tweenInfo, {
+                    Position = UDim2.new(endX, startOffsetX, -0.5, math.random(-20, 20)),  -- Random end offset
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(0, 0, 0, 0)
+                })
+                tween:Play()
+                -- Random delay between spawns
+                task.wait(math.random(20, 40) / (CONFIG.PARTICLE_SPEED * 10))
+            end
+        end)
+    end
+end
+
+-- Function to teleport to a player
+local function teleportToPlayer(targetPlayer)
+    local localPlayer = Players.LocalPlayer
+    local character = localPlayer.Character
+    local targetCharacter = targetPlayer.Character
+    if not (character and targetCharacter) then return end
+    local humanoid = character:FindFirstChild("Humanoid")
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    local targetHRP = targetCharacter:FindFirstChild("HumanoidRootPart")
+    if not (humanoid and hrp and targetHRP) then return end
+    local targetCFrame = targetHRP.CFrame
+    local teleportPosition = targetCFrame.Position - (targetCFrame.LookVector * CONFIG.TELEPORT_DISTANCE)
+    teleportPosition = teleportPosition + Vector3.new(0, CONFIG.TELEPORT_HEIGHT, 0)
+    local particlepart = Instance.new("Part", workspace)
+    particlepart.Transparency = 1
+    particlepart.Anchored = true
+    particlepart.CanCollide = false
+    particlepart.Position = hrp.Position
+    local transmitter1 = Instance.new("ParticleEmitter")
+    transmitter1.Texture = "http://www.roblox.com/asset/?id=89296104222585"
+    transmitter1.Size = NumberSequence.new(4)
+    transmitter1.Lifetime = NumberRange.new(0.15, 0.15)
+    transmitter1.Rate = 100
+    transmitter1.TimeScale = 0.25
+    transmitter1.VelocityInheritance = 1
+    transmitter1.Drag = 5
+    transmitter1.Parent = particlepart
+    local particlepart2 = Instance.new("Part", workspace)
+    particlepart2.Transparency = 1
+    particlepart2.Anchored = true
+    particlepart2.CanCollide = false
+    particlepart2.Position = teleportPosition
+    local transmitter2 = Instance.new("ParticleEmitter")
+    transmitter2.Texture = "http://www.roblox.com/asset/?id=89296104222585"
+    transmitter2.Size = NumberSequence.new(4)
+    transmitter2.Lifetime = NumberRange.new(0.15, 0.15)
+    transmitter2.Rate = 100
+    transmitter2.TimeScale = 0.25
+    transmitter2.VelocityInheritance = 1
+    transmitter2.Drag = 5
+    transmitter2.Parent = particlepart2
+    local fadeTime = 0.1
+    local tweenInfo = TweenInfo.new(fadeTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local meshParts = {}
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("MeshPart") then
+            table.insert(meshParts, part)
+        end
+    end
+    for _, part in ipairs(meshParts) do
+        local tween = TweenService:Create(part, tweenInfo, {Transparency = 1})
+        tween:Play()
+    end
+    task.wait(fadeTime)
+    hrp.CFrame = CFrame.new(teleportPosition, targetHRP.Position)
+    local teleportSound = Instance.new("Sound")
+    teleportSound.SoundId = "rbxassetid://5066021887"
+    local head = character:FindFirstChild("Head")
+    if head then
+        teleportSound.Parent = head
+    else
+        teleportSound.Parent = hrp
+    end
+    teleportSound.Volume = 0.5
+    teleportSound:Play()
+    for _, part in ipairs(meshParts) do
+        local tween = TweenService:Create(part, tweenInfo, {Transparency = 0})
+        tween:Play()
+    end
+    task.wait(1)
+    particlepart:Destroy()
+    particlepart2:Destroy()
+end
+
 -- Function to attach tag to player's head
 local function attachTagToHead(character, player, rankText)
     local head = character:WaitForChild("Head", 5)
@@ -107,193 +238,220 @@ local function attachTagToHead(character, player, rankText)
     local existingTag = head:FindFirstChild("PoisonTag")
     if existingTag then existingTag:Destroy() end
 
+    -- Disable default Roblox nametag
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+    end
+
+    local rankData = RankColors[rankText] or RankColors["Poison User"]
+
     -- Create new tag
     local tag = Instance.new("BillboardGui")
     tag.Adornee = head
     tag.Active = true
     tag.Name = "PoisonTag"
-    tag.Size = CONFIG.TAG_SIZE
+    tag.Size = UDim2.new(0, 0, 0, CONFIG.TAG_SIZE.Y.Offset)
     tag.StudsOffset = CONFIG.TAG_OFFSET
     tag.AlwaysOnTop = true
     tag.MaxDistance = CONFIG.MAX_DISTANCE
+    tag.LightInfluence = 0
+    tag.ResetOnSpawn = false
 
     -- Main container
-    local container = Instance.new("TextButton")
+    local container = Instance.new("Frame")
+    container.Name = "TagContainer"
     container.Size = UDim2.new(1, 0, 1, 0)
-    container.BackgroundTransparency = 0.2
-    container.BackgroundColor3 = RankColors[rankText].primary
+    container.BackgroundColor3 = rankData.primary
+    container.BackgroundTransparency = 0.15
     container.BorderSizePixel = 0
-    container.Text = ""
+    container.ClipsDescendants = true
     container.Parent = tag
 
-    -- Add emoji icon
-    local emoji = Instance.new("TextLabel")
-    emoji.Size = UDim2.new(1, 0, 0.5, 0)
-    emoji.Position = UDim2.new(0, 0, -0.45, 0)
-    emoji.BackgroundTransparency = 1
-    emoji.TextSize = 25
-    emoji.TextColor3 = RankColors[rankText].accent
-    emoji.Font = Enum.Font.SourceSans
-    
-    -- Set emoji based on rank
-    if rankText == "Poison Owner" then
-        emoji.Text = "👑" -- Crown emoji for owners
-    elseif rankText == "Poison Admin" then
-        emoji.Text = "⚡" -- Lightning emoji for admins
-    elseif rankText == "Poison<3" then
-        emoji.Text = "❤" -- Heart emoji for Poison
-    else
-        emoji.Text = "☠️" -- Poison symbol for regular users
+    -- Create UICorner for container
+    local containerCorner = Instance.new("UICorner")
+    containerCorner.CornerRadius = CONFIG.CORNER_RADIUS
+    containerCorner.Parent = container
+
+    -- Add border
+    local border = Instance.new("UIStroke")
+    border.Color = rankData.accent
+    border.Thickness = 2
+    border.Transparency = 0.2
+    border.Parent = container
+
+    -- Add click button
+    local clickButton = Instance.new("TextButton")
+    clickButton.Name = "ClickButton"
+    clickButton.Size = UDim2.new(1, 0, 1, 0)
+    clickButton.BackgroundTransparency = 1
+    clickButton.Text = ""
+    clickButton.ZIndex = 10
+    clickButton.AutoButtonColor = false
+    clickButton.Active = true
+    clickButton.Parent = container
+
+    if player ~= Players.LocalPlayer then
+        clickButton.MouseButton1Click:Connect(function()
+            teleportToPlayer(player)
+        end)
+        clickButton.MouseEnter:Connect(function()
+            TweenService:Create(container, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
+        end)
+        clickButton.MouseLeave:Connect(function()
+            TweenService:Create(container, TweenInfo.new(0.3), {BackgroundTransparency = 0.15}):Play()
+        end)
     end
+
+    -- Add particles container
+    local particlesContainer = Instance.new("Frame")
+    particlesContainer.Name = "ParticlesContainer"
+    particlesContainer.Size = UDim2.new(1, 0, 1, 0)
+    particlesContainer.BackgroundTransparency = 1
+    particlesContainer.ZIndex = 2
+    particlesContainer.ClipsDescendants = true
+    particlesContainer.Parent = container
     
-    emoji.Parent = container
+    local pContainerCorner = Instance.new("UICorner")
+    pContainerCorner.CornerRadius = UDim.new(1, 0)
+    pContainerCorner.Parent = particlesContainer
+    
+    createParticles(tag, particlesContainer, rankData.accent)
 
-    -- Animate emoji with heartbeat effect
-    local heartbeatTweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-    local heartbeatTween = TweenService:Create(emoji, heartbeatTweenInfo, {TextSize = 20})
-    heartbeatTween:Play()
+    -- Add emoji label
+    local emojiLabel = Instance.new("TextLabel")
+    emojiLabel.Name = "EmojiLabel"
+    emojiLabel.Size = UDim2.new(0, 30, 0, 30)
+    emojiLabel.Position = UDim2.new(0, 8, 0.5, -15)
+    emojiLabel.BackgroundTransparency = 1
+    emojiLabel.Text = rankData.emoji
+    emojiLabel.TextSize = 22
+    emojiLabel.Font = Enum.Font.GothamBold
+    emojiLabel.TextColor3 = Color3.new(1, 1, 1)
+    emojiLabel.ZIndex = 5
+    emojiLabel.Parent = container
 
-    -- Rounded corners
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0.2, 0)
-    corner.Parent = container
+    -- Calculate text widths for dynamic sizing
+    local function getTextWidth(text, font, textSize)
+        local textService = game:GetService("TextService")
+        local result = textService:GetTextSize(text, textSize, font, Vector2.new(1000, 16))
+        return result.X
+    end
 
-    -- Accent bar
-    local accent = Instance.new("Frame")
-    accent.Size = UDim2.new(0.7, 0, 0, 2.5)
-    accent.Position = UDim2.new(0.5, 0, 0, 0)
-    accent.BackgroundColor3 = RankColors[rankText].accent
-    accent.BorderSizePixel = 0
-    accent.Parent = container
+    -- DisplayName label
+    local displayNameLabel = Instance.new("TextLabel")
+    displayNameLabel.Name = "DisplayNameLabel"
+    displayNameLabel.BackgroundTransparency = 1
+    
+    -- Get the display name and prepend "@"
+    local shortDisplayName = player.DisplayName or player.Name
+    -- If the username exceeds 10 characters, truncate and append "…"
+    if #shortDisplayName > 10 then
+        shortDisplayName = string.sub(shortDisplayName, 1, 10) .. "…"
+    end
+    displayNameLabel.Text = "@" .. shortDisplayName
+    
+    -- Make the username a bit smaller by using a smaller text size
+    displayNameLabel.TextSize = 10
+    displayNameLabel.Font = Enum.Font.GothamBold
+    
+    -- Set the display name color to the accent color
+    displayNameLabel.TextColor3 = rankData.accent  
+    displayNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    displayNameLabel.ZIndex = 5
 
-    local accentCorner = Instance.new("UICorner")
-    accentCorner.CornerRadius = UDim.new(0, 2)
-    accentCorner.Parent = accent
-
-    accent.AnchorPoint = Vector2.new(0.5, 0.5)
-    accent.Position = UDim2.new(0.5, 0, 0, 0)
-
-    -- Animate accent bar
-    local tweenInfoAccent = TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-    local tweenAccent = TweenService:Create(accent, tweenInfoAccent, {Size = UDim2.new(0.1, 0, 0, 2.5)})
-    tweenAccent:Play()
-
-    -- Rank text
+    -- Rank label
     local rankLabel = Instance.new("TextLabel")
-    rankLabel.Size = UDim2.new(1, 0, 0.6, 0)
-    rankLabel.Position = UDim2.new(0, 0, 0.1, 0)
+    rankLabel.Name = "RankLabel"
     rankLabel.BackgroundTransparency = 1
-    rankLabel.Text = rankText
-    rankLabel.TextColor3 = Color3.new(1, 1, 1)
-    rankLabel.TextSize = 17
-    rankLabel.Font = Enum.Font.SourceSansBold
+    
+    -- Truncate rankText to max 12 characters if necessary
+    local shortRankText = rankText
+    if #shortRankText > 12 then
+        shortRankText = string.sub(shortRankText, 1, 12) .. "…"
+    end
+    rankLabel.Text = shortRankText
+    rankLabel.TextSize = 14
+    rankLabel.Font = Enum.Font.GothamBold
+    rankLabel.TextColor3 = rankData.accent
+    rankLabel.TextXAlignment = Enum.TextXAlignment.Left
+    rankLabel.ZIndex = 5
+
+    local sidePadding = 16 -- Increased side padding
+    local emojiWidth = 36 -- 30px emoji + 6px left margin
+    local textService = game:GetService("TextService")
+    local rankWidth = getTextWidth(rankLabel.Text, Enum.Font.GothamBold, 14)
+    local totalWidth = emojiWidth + rankWidth + (sidePadding * 2) -- Add padding on both sides
+
+    tag.Size = UDim2.new(0, totalWidth, 0, CONFIG.TAG_SIZE.Y.Offset)
+    container.Size = UDim2.new(1, 0, 1, 0)
+
+    -- Layout: emoji | rank (top) | displayName (bottom)
+    emojiLabel.Position = UDim2.new(0, sidePadding, 0.5, -15)
+    emojiLabel.Size = UDim2.new(0, 30, 0, 30)
+
+    rankLabel.Size = UDim2.new(1, -(emojiWidth + sidePadding * 2), 0, 16)
+    rankLabel.Position = UDim2.new(0, emojiWidth + sidePadding, 0, 3)
     rankLabel.Parent = container
 
-    -- Dynamic text sizing based on distance
-    local maxDistance = 50
-    local minSize = 8
-    local maxSize = 17
+    displayNameLabel.Size = UDim2.new(1, -(emojiWidth + sidePadding * 2), 0, 16)
+    displayNameLabel.Position = UDim2.new(0, emojiWidth + sidePadding, 0, 17)
+    displayNameLabel.Parent = container
 
-    RunService.Heartbeat:Connect(function()
-        local localPlayer = Players.LocalPlayer
-        local localPlayerHead = localPlayer.Character and localPlayer.Character:FindFirstChild("Head")
-        if localPlayer and localPlayerHead and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local targetHumanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
-            if targetHumanoidRootPart then
-                local distance = (localPlayerHead.Position - targetHumanoidRootPart.Position).Magnitude
-                local newSize = math.clamp(maxSize - ((distance / maxDistance) * (maxSize - minSize)), minSize, maxSize)
-                rankLabel.TextSize = newSize
-            end
-        end
-    end)
-
-    -- Username text
-    local userLabel = Instance.new("TextLabel")
-    userLabel.Size = UDim2.new(1, 0, 0.4, 0)
-    userLabel.Position = UDim2.new(0, 0, 0.6, 0)
-    userLabel.BackgroundTransparency = 1
-    userLabel.Text = "@" .. player.Name
-    userLabel.TextColor3 = RankColors[rankText].accent
-    userLabel.TextSize = 8
-    userLabel.Font = Enum.Font.GothamBold
-    userLabel.Parent = container
-
-    -- Add tag to player
-    tag.Parent = head
-
-    -- Hide username at distance
-    local playerHead = player.Character:WaitForChild("Head")
-    local humanoidRootPart = player.Character:WaitForChild("HumanoidRootPart")
-    RunService.Heartbeat:Connect(function()
-        local localPlayer = Players.LocalPlayer
-        local localPlayerHead = localPlayer.Character and localPlayer.Character:FindFirstChild("Head")
-        if localPlayer and localPlayerHead and player.Character and playerHead and humanoidRootPart then
-            local distance = (localPlayerHead.Position - humanoidRootPart.Position).Magnitude
-            userLabel.Visible = distance <= maxDistance
-        end
-    end)
-
-    -- Scale tag based on distance
-    local connection = RunService.Heartbeat:Connect(function()
-        if not (character and character:FindFirstChild("Head") and Players.LocalPlayer.Character) then return end
-        local localCharacter = Players.LocalPlayer.Character
-        local localHead = localCharacter:FindFirstChild("Head")
-        if not localHead then return end
-        local distance = (head.Position - localHead.Position).Magnitude
-        tag.Size = UDim2.new(0, CONFIG.TAG_SIZE.X.Offset * math.clamp(1 - (distance / CONFIG.SCALE_DISTANCE), 0.5, 2), 
-                             0, CONFIG.TAG_SIZE.Y.Offset * math.clamp(1 - (distance / CONFIG.SCALE_DISTANCE), 0.5, 2))
-    end)
-
-    -- Clean up connection when tag is removed
-    tag.AncestryChanged:Connect(function(_, parent)
-        if not parent then
-            connection:Disconnect()
-        end
-    end)
-
-    -- Hover effects
-    container.MouseEnter:Connect(function()
-        TweenService:Create(container, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
-    end)
-
-    container.MouseLeave:Connect(function()
-        TweenService:Create(container, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
-    end)
+    -- Revised minimized configuration
+    local isMinimized = false
+    local FULL_SIZE = UDim2.new(0, totalWidth, 0, CONFIG.TAG_SIZE.Y.Offset)
+    local MINI_SIZE = UDim2.new(0, 40, 0, 40)
+    local MINI_OFFSET = Vector3.new(0, 1.0, 0)
+    local activeTween = true
     
-    -- Add teleport functionality when clicking on tag
-    container.MouseButton1Click:Connect(function()
-        if player ~= Players.LocalPlayer then
-            -- Teleport to the player
-            local localChar = Players.LocalPlayer.Character
-            local targetChar = player.Character
-            
-            if localChar and targetChar then
-                local localHRP = localChar:FindFirstChild("HumanoidRootPart")
-                local targetHRP = targetChar:FindFirstChild("HumanoidRootPart")
-                
-                if localHRP and targetHRP then
-                    -- Create teleport effect
-                    local effect = Instance.new("Part")
-                    effect.Size = Vector3.new(1, 1, 1)
-                    effect.Anchored = true
-                    effect.CanCollide = false
-                    effect.Material = Enum.Material.Neon
-                    effect.Color = RankColors[rankText].accent
-                    effect.CFrame = localHRP.CFrame
-                    effect.Transparency = 0.5
-                    effect.Shape = Enum.PartType.Ball
-                    effect.Parent = workspace
-                    
-                    -- Teleport with offset
-                    localHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, 3)
-                    
-                    -- Clean up effect
-                    game:GetService("Debris"):AddItem(effect, 1)
+    spawn(function()
+        while activeTween do
+            if character and head and head.Parent and Players.LocalPlayer and Players.LocalPlayer.Character then
+                local localHead = Players.LocalPlayer.Character:FindFirstChild("Head")
+                if localHead then
+                    local distance = (head.Position - localHead.Position).Magnitude
+                    if distance > (CONFIG.DISTANCE_THRESHOLD + CONFIG.HYSTERESIS) and not isMinimized then
+                        isMinimized = true
+                        TweenService:Create(tag, TweenInfo.new(0.5), { Size = MINI_SIZE, StudsOffset = MINI_OFFSET }):Play()
+                        TweenService:Create(rankLabel, TweenInfo.new(0.5), { TextTransparency = 1 }):Play()
+                        TweenService:Create(displayNameLabel, TweenInfo.new(0.5), { TextTransparency = 1 }):Play()
+                        TweenService:Create(emojiLabel, TweenInfo.new(0.5), { Position = UDim2.new(0.5, -15, 0.5, -15), Size = UDim2.new(0, 30, 0, 30), TextSize = 26 }):Play()
+                        TweenService:Create(containerCorner, TweenInfo.new(0.5), { CornerRadius = UDim.new(1, 0) }):Play()
+                    elseif distance < (CONFIG.DISTANCE_THRESHOLD - CONFIG.HYSTERESIS) and isMinimized then
+                        isMinimized = false
+                        TweenService:Create(tag, TweenInfo.new(0.5), { Size = FULL_SIZE, StudsOffset = CONFIG.TAG_OFFSET }):Play()
+                        TweenService:Create(rankLabel, TweenInfo.new(0.5), { TextTransparency = 0 }):Play()
+                        TweenService:Create(displayNameLabel, TweenInfo.new(0.5), { TextTransparency = 0 }):Play()
+                        TweenService:Create(emojiLabel, TweenInfo.new(0.5), { Position = UDim2.new(0, 8, 0.5, -15), Size = UDim2.new(0, 30, 0, 30), TextSize = 22 }):Play()
+                        TweenService:Create(containerCorner, TweenInfo.new(0.5), { CornerRadius = CONFIG.CORNER_RADIUS }):Play()
+                    end
                 end
             end
+            task.wait(0.2)
         end
     end)
-end
+    
+    tag.AncestryChanged:Connect(function(_, parent)
+        if not parent then
+            activeTween = false
+        end
+    end)
+    
+    Players.PlayerRemoving:Connect(function(removedPlayer)
+        if removedPlayer == player then
+            if tag and tag.Parent then
+                tag:Destroy()
+            end
+            activeTween = false
+        end
+    end)
+    
+    -- Parent the tag to the head
+    tag.Parent = head
+    
+    return tag
+}
 
 -- Function to apply the appropriate tag to each player
 local function applyPlayerTag(player)
@@ -328,7 +486,7 @@ local function applyPlayerTag(player)
             attachTagToHead(character, player, tagText)
         end
     end)
-end
+}
 
 -- Mark the local player as an executor
 markAsExecutor(Players.LocalPlayer)
