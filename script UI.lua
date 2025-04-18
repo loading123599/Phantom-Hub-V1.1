@@ -1,4 +1,4 @@
--- Combined Script for Poison's Hub with BigBaseplate loading first
+-- Combined Script for Poison's Hub with fixed nametag system
 
 -- First, load the BigBaseplate
 print("Loading BigBaseplate...")
@@ -8,7 +8,7 @@ print("BigBaseplate loaded successfully!")
 -- Wait to ensure BigBaseplate is fully loaded
 wait(1)
 
--- Then load the Player Tags system
+-- Then load the Player Tags system with improved executor tracking
 print("Loading Player Tags system...")
 
 -- Modified Player Tag System for Poison's Hub (Only shows on script executors)
@@ -59,26 +59,45 @@ local RankColors = {
     }
 }
 
--- Create a shared StringValue to track script executors
-local executorsValue
-if not ReplicatedStorage:FindFirstChild("PoisonHubExecutors") then
-    executorsValue = Instance.new("StringValue")
-    executorsValue.Name = "PoisonHubExecutors"
-    executorsValue.Value = ""
-    executorsValue.Parent = ReplicatedStorage
+-- Create a RemoteEvent to track script executors (more reliable than StringValue)
+local executorsEvent
+if not ReplicatedStorage:FindFirstChild("PoisonHubExecutorsEvent") then
+    executorsEvent = Instance.new("RemoteEvent")
+    executorsEvent.Name = "PoisonHubExecutorsEvent"
+    executorsEvent.Parent = ReplicatedStorage
 else
-    executorsValue = ReplicatedStorage:FindFirstChild("PoisonHubExecutors")
+    executorsEvent = ReplicatedStorage:FindFirstChild("PoisonHubExecutorsEvent")
+end
+
+-- Create a folder to store executor data
+local executorsFolder
+if not ReplicatedStorage:FindFirstChild("PoisonHubExecutors") then
+    executorsFolder = Instance.new("Folder")
+    executorsFolder.Name = "PoisonHubExecutors"
+    executorsFolder.Parent = ReplicatedStorage
+else
+    executorsFolder = ReplicatedStorage:FindFirstChild("PoisonHubExecutors")
+end
+
+-- Function to register this player as an executor
+local function registerAsExecutor()
+    local playerName = Players.LocalPlayer.Name
+    
+    -- Create a BoolValue for this player if it doesn't exist
+    if not executorsFolder:FindFirstChild(playerName) then
+        local executorValue = Instance.new("BoolValue")
+        executorValue.Name = playerName
+        executorValue.Value = true
+        executorValue.Parent = executorsFolder
+        
+        -- Fire the remote event to notify other clients
+        executorsEvent:FireServer(playerName)
+    end
 end
 
 -- Function to check if a player is in the executors list
 local function isExecutor(playerName)
-    local executorsList = executorsValue.Value:split(",")
-    for _, name in ipairs(executorsList) do
-        if name and name ~= "" and name == playerName then
-            return true
-        end
-    end
-    return false
+    return executorsFolder:FindFirstChild(playerName) ~= nil
 end
 
 -- Function to check if a player is an owner
@@ -318,39 +337,48 @@ local function applyPlayerTag(player)
     end)
 end
 
--- Add this player to the executors list
-if not string.find(executorsValue.Value, Players.LocalPlayer.Name) then
-    if executorsValue.Value == "" then
-        executorsValue.Value = Players.LocalPlayer.Name
-    else
-        executorsValue.Value = executorsValue.Value .. "," .. Players.LocalPlayer.Name
-    end
+-- Register this player as an executor
+registerAsExecutor()
+
+-- Set up server-side handling for the RemoteEvent
+if RunService:IsServer() then
+    executorsEvent.OnServerEvent:Connect(function(player, executorName)
+        -- Create a BoolValue for this player if it doesn't exist
+        if not executorsFolder:FindFirstChild(executorName) then
+            local executorValue = Instance.new("BoolValue")
+            executorValue.Name = executorName
+            executorValue.Value = true
+            executorValue.Parent = executorsFolder
+        end
+    end)
 end
 
--- Listen for changes to the executors list
-executorsValue.Changed:Connect(function()
-    -- Apply tags to all players in the executors list
+-- Set up client-side handling for executor changes
+if RunService:IsClient() then
+    -- Listen for changes to the executors folder
+    executorsFolder.ChildAdded:Connect(function(child)
+        local playerName = child.Name
+        local player = Players:FindFirstChild(playerName)
+        if player then
+            applyPlayerTag(player)
+        end
+    end)
+    
+    -- Initialize for all current players who are executors
     for _, player in ipairs(Players:GetPlayers()) do
         if isExecutor(player.Name) then
             applyPlayerTag(player)
         end
     end
-end)
-
--- Initialize for all current players
-for _, player in ipairs(Players:GetPlayers()) do
-    if isExecutor(player.Name) then
-        applyPlayerTag(player)
-    end
+    
+    -- Set up for new players
+    Players.PlayerAdded:Connect(function(player)
+        -- Check if they're in our executors list
+        if isExecutor(player.Name) then
+            applyPlayerTag(player)
+        end
+    end)
 end
-
--- Set up for new players
-Players.PlayerAdded:Connect(function(player)
-    -- Check if they're in our executors list
-    if isExecutor(player.Name) then
-        applyPlayerTag(player)
-    end
-end)
 
 -- Function to add a custom tag for a specific player
 local function addCustomTag(playerName, tagType)
@@ -395,10 +423,8 @@ local TagSystem = {
     end,
     getExecutorsList = function()
         local executorsList = {}
-        for _, name in ipairs(executorsValue.Value:split(",")) do
-            if name and name ~= "" then
-                table.insert(executorsList, name)
-            end
+        for _, child in ipairs(executorsFolder:GetChildren()) do
+            table.insert(executorsList, child.Name)
         end
         return executorsList
     end
@@ -987,7 +1013,7 @@ print("All components loaded successfully!")
 
 -- Create a loadstring version for easy distribution
 local loadstringVersion = [[
-loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/Updated%20Poison%20Hub%20UI"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/Updated%20Poison%20Hub%20UI.lua"))()
 ]]
 
 print("Loadstring version for distribution: " .. loadstringVersion)
