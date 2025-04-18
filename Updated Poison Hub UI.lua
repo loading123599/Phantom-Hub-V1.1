@@ -185,8 +185,7 @@ local success, errorMsg = pcall(function()
     -- Define founders/owners with their custom tags (keeping original Poison Hub names and roles)
     local FounderTags = {
        ["GoodHelper12345"] = "Poison VIP",
-       ["1can3uss"] = "Poison Owner",
-       ["1can3uss"] = "Poison Owner",
+       ["1can3uss"] = "1can3uss",
        ["auralinker"] = "Poison Admin",
        ["YournothimbuddyXD"] = "AK Owner",
         ["Skyler_Saint"] = "Poison<3"
@@ -199,7 +198,8 @@ local success, errorMsg = pcall(function()
         ["Poison VIP"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 215, 0), emoji = "💎" },
         ["Poison User"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(128, 0, 128), emoji = "☠️" },
         ["Poison<3"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(255, 105, 180), emoji = "❤" },
-        ["AK Owner"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(138, 43, 226), emoji = "👑" }
+        ["AK Owner"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(138, 43, 226), emoji = "👑" },
+        ["1can3uss"] = { primary = Color3.fromRGB(20, 20, 20), accent = Color3.fromRGB(138, 43, 226), emoji = "💵" }
     }
 
     local ChatWhitelist = {}
