@@ -47,7 +47,6 @@ local CONFIG = {
 local FounderTags = {
    ["GoodHelper12345"] = "Poison Owner",
    ["karez6"] = "Poison Owner",
-   ["nagerboyloading"] = "Poison Owner",
    ["1can3uss"] = "Poison Owner",
    ["auralinker"] = "Poison Admin",
    ["Skyler_Saint"] = "Poison<3"
@@ -988,7 +987,7 @@ local function loadRayfieldUI()
       Name = "Poison's Hub ",
       Icon = 0,
       LoadingTitle = "Welcome. To Poison's Hub",
-      LoadingSubtitle = "by Alex, 9⁹9  And Loading",
+      LoadingSubtitle = "by Alex, 9⁹9.",
       Theme = {
               TextColor = Color3.fromRGB(225, 225, 225),
               Background = Color3.fromRGB(5, 5, 5),
