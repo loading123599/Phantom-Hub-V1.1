@@ -1,8 +1,41 @@
-print("Loading BigBaseplate...")
-loadstring(game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/BigBaseplate.lua"))()
-print("BigBaseplate loaded successfully!")
+-- Start with error handling and initialization
+print("Starting Poison Hub script...")
 
--- Wait to ensure BigBaseplate is fully loaded
+-- Add global variable for chat spam toggle first so it's available throughout the script
+_G.ChatSpamEnabled = true
+
+-- Safely load BigBaseplate with error handling
+local function safelyLoadBigBaseplate()
+    print("Attempting to load BigBaseplate...")
+    local success, result = pcall(function()
+        return game:HttpGet("https://raw.githubusercontent.com/loading123599/Poisons-Hub-V1.1/refs/heads/main/BigBaseplate.lua")
+    end)
+    
+    if not success then
+        warn("Failed to fetch BigBaseplate: " .. tostring(result))
+        return false
+    end
+    
+    local loadSuccess, loadError = pcall(function()
+        loadstring(result)()
+    end)
+    
+    if not loadSuccess then
+        warn("Failed to execute BigBaseplate: " .. tostring(loadError))
+        return false
+    end
+    
+    print("BigBaseplate loaded successfully!")
+    return true
+end
+
+-- Try to load BigBaseplate but continue even if it fails
+local bigBaseplateLoaded = safelyLoadBigBaseplate()
+if not bigBaseplateLoaded then
+    warn("Continuing without BigBaseplate...")
+end
+
+-- Wait a moment before continuing
 wait(1)
 
 -- Then load the Player Tags system
@@ -14,6 +47,21 @@ local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local TextService = game:GetService("TextService")
 
+-- Create a notification to show the script is working
+local function showNotification(title, text, duration)
+   local StarterGui = game:GetService("StarterGui")
+   pcall(function()
+       StarterGui:SetCore("SendNotification", {
+           Title = title,
+           Text = text,
+           Duration = duration
+       })
+   end)
+end
+
+-- Show a notification that the script is running
+showNotification("Poison Hub", "Script is starting...", 3)
+
 -- Show credits notification
 local function showCredits()
     local screenGui = Instance.new("ScreenGui")
@@ -24,7 +72,13 @@ local function showCredits()
     if game:GetService("RunService"):IsStudio() then
         screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     else
-        screenGui.Parent = game.CoreGui
+        pcall(function()
+            screenGui.Parent = game.CoreGui
+        end)
+        
+        if not screenGui.Parent then
+            screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+        end
     end
     
     local frame = Instance.new("Frame")
@@ -149,28 +203,6 @@ end
 
 local message = "Poison Hub ON TOP ON TOP ABCDEFGH()"
 local modifiedMessage = modifyString(message)
-
--- Chat Spam Functionality
-spawn(function()
-    while true do
-        for i = 1, 10 do
-            Players:Chat(modifiedMessage)
-        end
-        wait(10)
-    end
-end)
-
--- Create a notification to show the script is working
-local function showNotification(title, text, duration)
-   local StarterGui = game:GetService("StarterGui")
-   pcall(function()
-       StarterGui:SetCore("SendNotification", {
-           Title = title,
-           Text = text,
-           Duration = duration
-       })
-   end)
-end
 
 -- Create basic particle frames
 local function createParticles(tag, parent, accentColor)
@@ -539,7 +571,11 @@ local function showPoisonHubNotification(player)
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "PoisonHubNotificationGui"
     screenGui.ResetOnSpawn = false
-    screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+    
+    -- Use pcall to handle potential errors when parenting to CoreGui
+    pcall(function()
+        screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+    end)
 
     local frame = Instance.new("Frame")
     frame.Name = "NotificationFrame"
@@ -594,6 +630,7 @@ local function showPoisonHubNotification(player)
     task.wait(3)
 
     local tweenOut = TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {Position = UDim2.new(1, 310,   Enum.EasingStyle.Quad, Enum.EasingDirection.In),
         {Position = UDim2.new(1, 310, 0, -80)})
     tweenOut:Play()
     tweenOut.Completed:Wait()
@@ -831,7 +868,13 @@ local function createMobileButtons()
    if game:GetService("RunService"):IsStudio() then
        MobileButtonsGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
    else
-       MobileButtonsGui.Parent = game.CoreGui
+       pcall(function()
+           MobileButtonsGui.Parent = game.CoreGui
+       end)
+       
+       if not MobileButtonsGui.Parent then
+           MobileButtonsGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+       end
    end
 
    -- Only show for mobile users
@@ -1419,10 +1462,7 @@ else
     showNotification("Warning", "Some components failed to load. The script may not function correctly.", 5)
 end
 
--- Add global variable for chat spam toggle
-_G.ChatSpamEnabled = true
-
--- Modify the chat spam functionality to check the toggle
+-- Chat Spam Functionality with toggle check
 spawn(function()
     while true do
         if _G.ChatSpamEnabled then
@@ -1434,42 +1474,4 @@ spawn(function()
     end
 end)
 
--- Fix the syntax error in the applyPlayerTag function
-local function applyPlayerTag(player)
-    if not player or not player:IsDescendantOf(Players) then
-        return
-    end
-    
-    local assignedTag = nil
-    
-    -- Check if player is a founder/owner
-    if FounderTags[player.Name] then
-        assignedTag = FounderTags[player.Name]
-    elseif player == Players.LocalPlayer then
-        -- Only give the local player (script executor) a tag
-        assignedTag = "Poison User"
-    end
-
-    -- Remove existing tag if present
-    if player.Character and player.Character:FindFirstChild("Head") then
-        local head = player.Character.Head
-        for _, child in ipairs(head:GetChildren()) do
-            if child.Name == "PoisonTag" then
-                child:Destroy()
-            end
-        end
-        
-        local localPlayerGui = Players.LocalPlayer:FindFirstChild("PlayerGui")
-        if localPlayerGui then
-            for _, gui in ipairs(localPlayerGui:GetChildren()) do
-                if gui:IsA("BillboardGui") and gui.Name == "PoisonTag" and gui.Adornee == head then
-                    gui:Destroy()
-                end
-            end
-        end
-    end
-
-    if assignedTag then
-        createTag(player, assignedTag)
-    end
-end
+print("Poison Hub script execution completed!")
