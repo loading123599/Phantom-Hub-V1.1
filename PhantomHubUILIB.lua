@@ -127,7 +127,7 @@ function Library:Window(title)
     Logo.BackgroundTransparency = 1.000
     Logo.Position = UDim2.new(0, 4, 0.5, 0)
     Logo.Size = UDim2.new(0, 26, 0, 30)
-    Logo.Image = "http://www.roblox.com/asset/?id=7803241868"
+    Logo.Image = "https://raw.githubusercontent.com/Justanewplayer19/PhantomHubReactIcons/refs/heads/main/IMG_2405.png"
     Logo.ImageColor3 = Color3.fromRGB(138, 43, 226) -- Purple phantom color
 
     -- Mobile sidebar toggle button
