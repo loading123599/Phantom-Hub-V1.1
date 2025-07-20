@@ -1,40 +1,7 @@
 --[[
     PhantomHubV2 - Mobile Optimized UI Library
-    With Local Asset Management
+    With Custom Logo (Decal ID: 85666553009593)
 --]]
-
--- FOLDER SETUP
-if not isfolder("PhantomHubV2") then 
-    makefolder("PhantomHubV2") 
-end
-if not isfolder("PhantomHubV2/Icons") then 
-    makefolder("PhantomHubV2/Icons") 
-end
-if not isfolder("PhantomHubV2/Assets") then 
-    makefolder("PhantomHubV2/Assets") 
-end
-
--- UNIVERSAL REQUEST FUNCTION
-local req = (syn and syn.request) or (http and http.request) or (request) or (fluxus and fluxus.request) or (http_request)
-
--- DOWNLOAD PHANTOM HUB LOGO
-local function downloadLogo()
-    if not isfile("PhantomHubV2/Icons/phantom_logo.png") then
-        local logoReq = req({
-            Url = "https://raw.githubusercontent.com/Justanewplayer19/PhantomHubReactIcons/refs/heads/main/IMG_2405.png", 
-            Method = "GET"
-        })
-        if logoReq and logoReq.Body then
-            writefile("PhantomHubV2/Icons/phantom_logo.png", logoReq.Body)
-            print("✅ PhantomHub logo downloaded successfully!")
-        else
-            print("❌ Failed to download PhantomHub logo")
-        end
-    end
-end
-
--- Download logo on startup
-pcall(downloadLogo)
 
 -- Clean up any existing PhantomHub instances
 pcall(function()
@@ -95,7 +62,7 @@ function Library:Window(title)
     Main.Size = mainSize
     Main.Active = true
     Main.Selectable = true
-    Main.Draggable = not isMobile -- Disable dragging on mobile
+    Main.Draggable = not isMobile
 
     UICorner_9.CornerRadius = UDim.new(0, 8)
     UICorner_9.Parent = Main
@@ -113,7 +80,6 @@ function Library:Window(title)
     Shadow.ScaleType = Enum.ScaleType.Slice
     Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
 
-    -- Mobile sidebar toggle
     local sidebarVisible = true
     
     tabs.Name = "tabs"
@@ -159,7 +125,7 @@ function Library:Window(title)
     Line.Position = UDim2.new(0.5, 0, 1, 1)
     Line.Size = UDim2.new(1, 0, 0, 1)
 
-    -- Logo with local file support and fallback
+    -- Logo with your custom decal ID
     Logo.Name = "Logo"
     Logo.Parent = Top
     Logo.AnchorPoint = Vector2.new(0, 0.5)
@@ -168,22 +134,21 @@ function Library:Window(title)
     Logo.Position = UDim2.new(0, 4, 0.5, 0)
     Logo.Size = UDim2.new(0, 26, 0, 26)
     
-    -- Try to load local logo first, then fallback
+    -- Try to load your custom decal
     local logoLoaded = false
-    if isfile("PhantomHubV2/Icons/phantom_logo.png") then
-        pcall(function()
-            Logo.Image = getcustomasset("PhantomHubV2/Icons/phantom_logo.png")
-            Logo.ImageColor3 = Color3.fromRGB(138, 43, 226) -- Apply purple tint
-            logoLoaded = true
-        end)
-    end
+    pcall(function()
+        Logo.Image = "rbxassetid://85666553009593"
+        Logo.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        logoLoaded = true
+        print("✅ Custom logo loaded successfully!")
+    end)
     
     -- Add corner radius to logo
     local LogoCorner = Instance.new("UICorner")
     LogoCorner.CornerRadius = UDim.new(0, 6)
     LogoCorner.Parent = Logo
     
-    -- Add "P" text as fallback if logo didn't load
+    -- Fallback if logo fails to load
     if not logoLoaded then
         local LogoText = Instance.new("TextLabel")
         LogoText.Name = "LogoText"
@@ -195,9 +160,10 @@ function Library:Window(title)
         LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
         LogoText.TextSize = 16
         LogoText.TextScaled = true
+        print("⚠️ Using fallback logo")
     end
 
-    -- Mobile sidebar toggle button
+    -- Mobile sidebar toggle
     if isMobile then
         MobileToggle.Name = "MobileToggle"
         MobileToggle.Parent = Top
@@ -246,7 +212,6 @@ function Library:Window(title)
         TweenService:Create(Close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(166, 166, 166)}):Play()
     end)
 
-    -- Hide resize button on mobile
     if not isMobile then
         Resize.Name = "Resize"
         Resize.Parent = Main
@@ -683,6 +648,7 @@ function Library:Window(title)
             end)
         end
 
+        -- 🔥 FIXED: KeyBind method (capital 'B')
         function TabFunctions:KeyBind(text, keypreset, callback)
             local binding = false
             callback = callback or function() end
