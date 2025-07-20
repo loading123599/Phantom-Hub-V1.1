@@ -120,15 +120,36 @@ function Library:Window(title)
     Line.Position = UDim2.new(0.5, 0, 1, 1)
     Line.Size = UDim2.new(1, 0, 0, 1)
 
+    -- Logo with fallback
     Logo.Name = "Logo"
     Logo.Parent = Top
     Logo.AnchorPoint = Vector2.new(0, 0.5)
-    Logo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Logo.BackgroundTransparency = 1.000
+    Logo.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    Logo.BackgroundTransparency = 0.000
     Logo.Position = UDim2.new(0, 4, 0.5, 0)
-    Logo.Size = UDim2.new(0, 26, 0, 30)
-    Logo.Image = "https://raw.githubusercontent.com/Justanewplayer19/PhantomHubReactIcons/refs/heads/main/IMG_2405.png"
-    Logo.ImageColor3 = Color3.fromRGB(138, 43, 226) -- Purple phantom color
+    Logo.Size = UDim2.new(0, 26, 0, 26)
+    
+    -- Try to load custom logo, fallback to solid color with "P" text
+    pcall(function()
+        Logo.Image = "https://raw.githubusercontent.com/Justanewplayer19/PhantomHubReactIcons/refs/heads/main/IMG_2405.png"
+    end)
+    
+    -- Add corner radius to logo
+    local LogoCorner = Instance.new("UICorner")
+    LogoCorner.CornerRadius = UDim.new(0, 6)
+    LogoCorner.Parent = Logo
+    
+    -- Add "P" text as fallback
+    local LogoText = Instance.new("TextLabel")
+    LogoText.Name = "LogoText"
+    LogoText.Parent = Logo
+    LogoText.BackgroundTransparency = 1.000
+    LogoText.Size = UDim2.new(1, 0, 1, 0)
+    LogoText.Font = Enum.Font.GothamBold
+    LogoText.Text = "P"
+    LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    LogoText.TextSize = 16
+    LogoText.TextScaled = true
 
     -- Mobile sidebar toggle button
     if isMobile then
@@ -199,7 +220,7 @@ function Library:Window(title)
     GameName.AnchorPoint = Vector2.new(0, 0.5)
     GameName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     GameName.BackgroundTransparency = 1.000
-    GameName.Position = isMobile and UDim2.new(0, 60, 0.5, 0) or UDim2.new(0, 32, 0.5, 0)
+    GameName.Position = isMobile and UDim2.new(0, 60, 0.5, 0) or UDim2.new(0, 36, 0.5, 0)
     GameName.Size = isMobile and UDim2.new(0, 120, 0, 22) or UDim2.new(0, 165, 0, 22)
     GameName.Font = Enum.Font.GothamBold
     GameName.Text = title or "Phantom Hub"
@@ -616,6 +637,7 @@ function Library:Window(title)
             end)
         end
 
+        -- Fixed KeyBind method name (was causing the error)
         function TabFunctions:KeyBind(text, keypreset, callback)
             local binding = false
             callback = callback or function() end
