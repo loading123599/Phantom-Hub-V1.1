@@ -1,5 +1,44 @@
+--[[
+    PhantomHubV2 - Mobile Optimized UI Library
+    With Local Asset Management
+--]]
+
+-- FOLDER SETUP
+if not isfolder("PhantomHubV2") then 
+    makefolder("PhantomHubV2") 
+end
+if not isfolder("PhantomHubV2/Icons") then 
+    makefolder("PhantomHubV2/Icons") 
+end
+if not isfolder("PhantomHubV2/Assets") then 
+    makefolder("PhantomHubV2/Assets") 
+end
+
+-- UNIVERSAL REQUEST FUNCTION
+local req = (syn and syn.request) or (http and http.request) or (request) or (fluxus and fluxus.request) or (http_request)
+
+-- DOWNLOAD PHANTOM HUB LOGO
+local function downloadLogo()
+    if not isfile("PhantomHubV2/Icons/phantom_logo.png") then
+        local logoReq = req({
+            Url = "https://raw.githubusercontent.com/Justanewplayer19/PhantomHubReactIcons/refs/heads/main/IMG_2405.png", 
+            Method = "GET"
+        })
+        if logoReq and logoReq.Body then
+            writefile("PhantomHubV2/Icons/phantom_logo.png", logoReq.Body)
+            print("✅ PhantomHub logo downloaded successfully!")
+        else
+            print("❌ Failed to download PhantomHub logo")
+        end
+    end
+end
+
+-- Download logo on startup
+pcall(downloadLogo)
+
+-- Clean up any existing PhantomHub instances
 pcall(function()
-    game:GetService('CoreGui'):FindFirstChild('PhantomHub'):Remove()
+    game:GetService('CoreGui'):FindFirstChild('PhantomHubV2'):Remove()
 end)
 
 local TweenService = game:GetService("TweenService")
@@ -39,7 +78,7 @@ function Library:Window(title)
     -- Mobile detection
     local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
     
-    ui.Name = "PhantomHub"
+    ui.Name = "PhantomHubV2"
     ui.Parent = game.CoreGui
     ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ui.ResetOnSpawn = false
@@ -120,7 +159,7 @@ function Library:Window(title)
     Line.Position = UDim2.new(0.5, 0, 1, 1)
     Line.Size = UDim2.new(1, 0, 0, 1)
 
-    -- Logo with fallback
+    -- Logo with local file support and fallback
     Logo.Name = "Logo"
     Logo.Parent = Top
     Logo.AnchorPoint = Vector2.new(0, 0.5)
@@ -129,27 +168,34 @@ function Library:Window(title)
     Logo.Position = UDim2.new(0, 4, 0.5, 0)
     Logo.Size = UDim2.new(0, 26, 0, 26)
     
-    -- Try to load custom logo, fallback to solid color with "P" text
-    pcall(function()
-        Logo.Image = "https://raw.githubusercontent.com/Justanewplayer19/PhantomHubReactIcons/refs/heads/main/IMG_2405.png"
-    end)
+    -- Try to load local logo first, then fallback
+    local logoLoaded = false
+    if isfile("PhantomHubV2/Icons/phantom_logo.png") then
+        pcall(function()
+            Logo.Image = getcustomasset("PhantomHubV2/Icons/phantom_logo.png")
+            Logo.ImageColor3 = Color3.fromRGB(138, 43, 226) -- Apply purple tint
+            logoLoaded = true
+        end)
+    end
     
     -- Add corner radius to logo
     local LogoCorner = Instance.new("UICorner")
     LogoCorner.CornerRadius = UDim.new(0, 6)
     LogoCorner.Parent = Logo
     
-    -- Add "P" text as fallback
-    local LogoText = Instance.new("TextLabel")
-    LogoText.Name = "LogoText"
-    LogoText.Parent = Logo
-    LogoText.BackgroundTransparency = 1.000
-    LogoText.Size = UDim2.new(1, 0, 1, 0)
-    LogoText.Font = Enum.Font.GothamBold
-    LogoText.Text = "P"
-    LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    LogoText.TextSize = 16
-    LogoText.TextScaled = true
+    -- Add "P" text as fallback if logo didn't load
+    if not logoLoaded then
+        local LogoText = Instance.new("TextLabel")
+        LogoText.Name = "LogoText"
+        LogoText.Parent = Logo
+        LogoText.BackgroundTransparency = 1.000
+        LogoText.Size = UDim2.new(1, 0, 1, 0)
+        LogoText.Font = Enum.Font.GothamBold
+        LogoText.Text = "P"
+        LogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        LogoText.TextSize = 16
+        LogoText.TextScaled = true
+    end
 
     -- Mobile sidebar toggle button
     if isMobile then
@@ -223,7 +269,7 @@ function Library:Window(title)
     GameName.Position = isMobile and UDim2.new(0, 60, 0.5, 0) or UDim2.new(0, 36, 0.5, 0)
     GameName.Size = isMobile and UDim2.new(0, 120, 0, 22) or UDim2.new(0, 165, 0, 22)
     GameName.Font = Enum.Font.GothamBold
-    GameName.Text = title or "Phantom Hub"
+    GameName.Text = title or "Phantom Hub V2"
     GameName.TextColor3 = Color3.fromRGB(138, 43, 226)
     GameName.TextSize = isMobile and 12 or 14
     GameName.TextXAlignment = Enum.TextXAlignment.Left
@@ -637,7 +683,6 @@ function Library:Window(title)
             end)
         end
 
-        -- Fixed KeyBind method name (was causing the error)
         function TabFunctions:KeyBind(text, keypreset, callback)
             local binding = false
             callback = callback or function() end
