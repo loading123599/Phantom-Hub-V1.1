@@ -4,7 +4,7 @@ end)
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-    
+
 local Library = {}
 function Library:Window(title)
     local ui = Instance.new("ScreenGui")
@@ -31,7 +31,7 @@ function Library:Window(title)
     local tabs = Instance.new("Frame")
     local Resize = Instance.new("ImageButton")
     local Cover = Instance.new("Frame")
-    
+
 
     ui.Name = "ui"
     ui.Parent = game.CoreGui
@@ -39,7 +39,7 @@ function Library:Window(title)
 
     Main.Name = "Main"
     Main.Parent = ui
-    Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Background set to black
     Main.BorderSizePixel = 0
     Main.Position = UDim2.new(0.377, 0,0.368, 0)
     Main.Size = UDim2.new(0, 470, 0, 283)
@@ -59,13 +59,13 @@ function Library:Window(title)
     Shadow.Size = UDim2.new(1, 30, 1, 30)
     Shadow.ZIndex = 0
     Shadow.Image = "rbxassetid://5554236805"
-    Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    Shadow.ImageColor3 = Color3.fromRGB(255, 255, 255) -- Outside thing set to white
     Shadow.ScaleType = Enum.ScaleType.Slice
     Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
 
     tabs.Name = "tabs"
     tabs.Parent = Main
-    tabs.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+    tabs.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Changed from grey to black
     tabs.BorderSizePixel = 0
     tabs.Position = UDim2.new(0, 0, 0, 35)
     tabs.Size = UDim2.new(0, 122, 1, -35)
@@ -76,16 +76,16 @@ function Library:Window(title)
     Cover.Name = "Cover"
     Cover.Parent = tabs
     Cover.AnchorPoint = Vector2.new(1, 0.5)
-    Cover.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+    Cover.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Changed from grey to black
     Cover.BorderSizePixel = 0
     Cover.Position = UDim2.new(1, 0, 0.5, 0)
     Cover.Size = UDim2.new(0, 5, 1, 0)
-    
+
     UICorner_2.Parent = tabs
 
     Top.Name = "Top"
     Top.Parent = Main
-    Top.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+    Top.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Changed from grey to black
     Top.BorderSizePixel = 0
     Top.Size = UDim2.new(1, 0, 0, 34)
 
@@ -95,7 +95,7 @@ function Library:Window(title)
     Cover_2.Name = "Cover"
     Cover_2.Parent = Top
     Cover_2.AnchorPoint = Vector2.new(0.5, 1)
-    Cover_2.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+    Cover_2.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Changed from grey to black
     Cover_2.BorderSizePixel = 0
     Cover_2.Position = UDim2.new(0.5, 0, 1, 0)
     Cover_2.Size = UDim2.new(1, 0, 0, 4)
@@ -115,10 +115,10 @@ function Library:Window(title)
     Logo.BackgroundTransparency = 1.000
     Logo.Position = UDim2.new(0, 4, 0.5, 0)
     Logo.Size = UDim2.new(0, 26, 0, 30)
-    Logo.Image = "http://www.roblox.com/asset/?id=7803241868"
-    Logo.ImageColor3 = Color3.fromRGB(232, 17, 85)
-    
-    
+    Logo.Image = "http://www.roblox.com/asset/?id=82075765264978"
+    Logo.ImageColor3 = Color3.fromRGB(255, 255, 255) -- Changed to white
+
+
     Close.Name = "Close"
     Close.Parent = Top
     Close.AnchorPoint = Vector2.new(1, 0.5)
@@ -127,7 +127,7 @@ function Library:Window(title)
     Close.Position = UDim2.new(1, -6, 0.5, 0)
     Close.Size = UDim2.new(0, 20, 0, 20)
     Close.Image = "http://www.roblox.com/asset/?id=7755372427"
-    Close.ImageColor3 = Color3.fromRGB(199, 199, 199)
+    Close.ImageColor3 = Color3.fromRGB(200, 200, 200) -- Changed to light grey
     Close.ScaleType = Enum.ScaleType.Crop
     Close.MouseButton1Click:connect(function()
         ui:Remove()
@@ -135,11 +135,11 @@ function Library:Window(title)
     Close.MouseEnter:connect(function()
     TweenService:Create(Close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255,255,255)},true):Play()
     end)
-    
+
     Close.MouseLeave:connect(function()
-    TweenService:Create(Close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(166, 166, 166)},true):Play()
+    TweenService:Create(Close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(200, 200, 200)},true):Play()
     end)
-    
+
     Resize.Name = "Resize"
     Resize.Parent = Main
     Resize.AnchorPoint = Vector2.new(1, 1)
@@ -148,7 +148,7 @@ function Library:Window(title)
     Resize.Size = UDim2.new(0, 16, 0, 16)
     Resize.ZIndex = 2
     Resize.Image = "rbxassetid://3926307971"
-    Resize.ImageColor3 = Color3.fromRGB(186, 13, 68)
+    Resize.ImageColor3 = Color3.fromRGB(255, 255, 255) -- Changed to white
     Resize.ImageRectOffset = Vector2.new(204, 364)
     Resize.ImageRectSize = Vector2.new(36, 36)
 
@@ -161,94 +161,94 @@ function Library:Window(title)
     GameName.Size = UDim2.new(0, 165, 0, 22)
     GameName.Font = Enum.Font.Gotham
     GameName.Text = title or "Game Name"
-    GameName.TextColor3 = Color3.fromRGB(232, 17, 85)
+    GameName.TextColor3 = Color3.fromRGB(255, 255, 255) -- Changed to white
     GameName.TextSize = 14.000
     GameName.TextXAlignment = Enum.TextXAlignment.Left
 
     Pages.Name = "Pages"
     Pages.Parent = Main
-    Pages.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Pages.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Changed to black
     Pages.BorderSizePixel = 0
     Pages.Position = UDim2.new(0, 130, 0, 42)
     Pages.Size = UDim2.new(1, -138, 1, -50)
-    
+
     tabs.Name = "tabs"
     tabs.Parent = Main
-    tabs.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+    tabs.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Changed to black
     tabs.BorderSizePixel = 0
     tabs.Position = UDim2.new(0, 0, 0, 35)
     tabs.Size = UDim2.new(0, 122, 1, -35)
-    
+
     TabsContainer.Name = "TabsContainer"
     TabsContainer.Parent = tabs
     TabsContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     TabsContainer.BackgroundTransparency = 1.000
     TabsContainer.Size = UDim2.new(1, 0, 1, 0)
-    
+
     TabsList.Name = "TabsList"
     TabsList.Parent = TabsContainer
     TabsList.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabsList.SortOrder = Enum.SortOrder.LayoutOrder
     TabsList.Padding = UDim.new(0, 5)
-    
+
     UIPadding.Parent = TabsContainer
     UIPadding.PaddingTop = UDim.new(0, 5)
     UICorner.CornerRadius = UDim.new(0, 6)
     UICorner.Parent = tabs
-    
+
     Cover.Name = "Cover"
     Cover.Parent = tabs
     Cover.AnchorPoint = Vector2.new(1, 0.5)
-    Cover.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+    Cover.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Changed to black
     Cover.BorderSizePixel = 0
     Cover.Position = UDim2.new(1, 0, 0.5, 0)
     Cover.Size = UDim2.new(0, 5, 1, 0)
-    
-    local function GRIR_fake_script() -- Resize.LocalScript 
-	local script = Instance.new('LocalScript', Resize)
 
-	local mouse = game.Players.LocalPlayer:GetMouse()
-	local input = game:GetService("UserInputService")
-	
-	local main = main
-	
-	local locationX = input:GetMouseLocation().X
-	local locationY = input:GetMouseLocation().Y
-	
-	local defaultX = 470
-	local defaultY = 283
-	
-	Resize.MouseButton1Down:Connect(function()
-		locationX = input:GetMouseLocation().X
-		locationY = input:GetMouseLocation().Y
-		local moveConnection
-		local releaseConnection
-		moveConnection = mouse.Move:Connect(function()
-			local DeltaX = input:GetMouseLocation().X - locationX
-			local DeltaY = input:GetMouseLocation().Y - locationY
-	
-			Main.Size = Main.Size + UDim2.new(0,DeltaX,0,DeltaY)
-			locationX = input:GetMouseLocation().X
-			locationY = input:GetMouseLocation().Y
-		end)
-		releaseConnection = input.InputEnded:Connect(function(inp)
-			if inp.UserInputType == Enum.UserInputType.MouseButton1 then    
-				moveConnection:disconnect()
-				releaseConnection:disconnect()
-			end
-		end)
-	end)
-	
-	
-	Main.Changed:Connect(function()
-		if Main.Size.X.Offset < defaultX then
-			Main.Size = UDim2.new(0, defaultX, 0, Main.Size.Y.Offset)
-		end
-		if Main.Size.Y.Offset < defaultY then
-			Main.Size = UDim2.new(0, Main.Size.X.Offset, 0, defaultY)
-		end
-	end)
-	
+    local function GRIR_fake_script() -- Resize.LocalScript 
+    local script = Instance.new('LocalScript', Resize)
+
+    local mouse = game.Players.LocalPlayer:GetMouse()
+    local input = game:GetService("UserInputService")
+
+    local main = main
+
+    local locationX = input:GetMouseLocation().X
+    local locationY = input:GetMouseLocation().Y
+
+    local defaultX = 470
+    local defaultY = 283
+
+    Resize.MouseButton1Down:Connect(function()
+        locationX = input:GetMouseLocation().X
+        locationY = input:GetMouseLocation().Y
+        local moveConnection
+        local releaseConnection
+        moveConnection = mouse.Move:Connect(function()
+            local DeltaX = input:GetMouseLocation().X - locationX
+            local DeltaY = input:GetMouseLocation().Y - locationY
+
+            Main.Size = Main.Size + UDim2.new(0,DeltaX,0,DeltaY)
+            locationX = input:GetMouseLocation().X
+            locationY = input:GetMouseLocation().Y
+        end)
+        releaseConnection = input.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 then    
+                moveConnection:disconnect()
+                releaseConnection:disconnect()
+            end
+        end)
+    end)
+
+
+    Main.Changed:Connect(function()
+        if Main.Size.X.Offset < defaultX then
+            Main.Size = UDim2.new(0, defaultX, 0, Main.Size.Y.Offset)
+        end
+        if Main.Size.Y.Offset < defaultY then
+            Main.Size = UDim2.new(0, Main.Size.X.Offset, 0, defaultY)
+        end
+    end)
+
 end
 coroutine.wrap(GRIR_fake_script)()
 
@@ -259,23 +259,23 @@ coroutine.wrap(GRIR_fake_script)()
         local Page = Instance.new("ScrollingFrame")
         local UICorner = Instance.new("UICorner")
         local TabButton = Instance.new("TextButton")
-        
-        
-        
+
+
+
         TabButton.Name = "TabButton"
         TabButton.Parent = TabsContainer
-        TabButton.BackgroundColor3 = Color3.fromRGB(232, 17, 85)
+        TabButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Changed to white for active state
         TabButton.BackgroundTransparency = 1
         TabButton.Size = UDim2.new(1, -12, 0, 30)
         TabButton.AutoButtonColor = false
         TabButton.Font = Enum.Font.Gotham
         TabButton.Text = title or 'Home'
-        TabButton.TextColor3 = Color3.fromRGB(72,72,72)
+        TabButton.TextColor3 = Color3.fromRGB(150, 150, 150) -- Default text color grey
         TabButton.TextSize = 14.000
-        
+
         UICorner.CornerRadius = UDim.new(0, 6)
         UICorner.Parent = TabButton
-        
+
         Page.Name = "Page"
         Page.Visible = false
         Page.Parent = Pages
@@ -286,20 +286,20 @@ coroutine.wrap(GRIR_fake_script)()
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.CanvasPosition = Vector2.new(0, 0)
         Page.ScrollBarThickness = 2
-        Page.ScrollBarImageColor3 = Color3.fromRGB(255, 24, 101)
-        
+        Page.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255) -- Scrollbar to white
+
         UIListLayout.Parent = Page
         UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
         UIListLayout.Padding = UDim.new(0, 6) 
-        
+
         UIPadding.Parent = Page
         UIPadding.PaddingTop = UDim.new(0, 5)
-        
+
         UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         Page.CanvasSize = UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y) 
         end)
-        
+
         TabButton.MouseButton1Click:Connect(function()
             for _,v in next, Pages:GetChildren() do
                 if v:IsA("ScrollingFrame") then
@@ -310,51 +310,51 @@ coroutine.wrap(GRIR_fake_script)()
             for _,v in next, TabsContainer:GetChildren() do
                 if v.Name == 'TabButton' then
                     TweenService:Create(v, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-                    TweenService:Create(v, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(72,72,72)}):Play()
-                TweenService:Create(TabButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.6}):Play()
-                TweenService:Create(TabButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)}):Play()
+                    TweenService:Create(v, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150,150,150)}):Play()
+                TweenService:Create(TabButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.8}):Play() -- Active tab is slightly transparent white
+                TweenService:Create(TabButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255,255,255)}):Play() -- Active tab text is white
                 end
             end
         end)
-                
+
         local TabFunctions = {}
         function TabFunctions:Button(title, callback)
             local Button = Instance.new("TextButton")
             local UICorner = Instance.new("UICorner")
-            
-            
-            
-            
-            
+
+
+
+
+
             callback = callback or function() end
 
             Button.Name = "Button"
             Button.Text = title or 'Button'
             Button.Parent = Page
-            Button.BackgroundColor3 = Color3.fromRGB(134, 10, 49)
+            Button.BackgroundColor3 = Color3.fromRGB(25, 25, 25) -- Dark grey button
             Button.BorderSizePixel = 0
             Button.Size = UDim2.new(1, -6, 0, 34)
             Button.AutoButtonColor = false
             Button.Font = Enum.Font.Gotham
-            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Button.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
             Button.TextSize = 14.000
-            
+
             UICorner.CornerRadius = UDim.new(0, 6)
             UICorner.Parent = Button
 
             Button.MouseEnter:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(134, 10, 49)}):Play()
+                TweenService:Create(Button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(45, 45, 45)}):Play() -- Hover to lighter grey
             end)
 
             Button.MouseLeave:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(185, 13, 68)}):Play()
+                TweenService:Create(Button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}):Play() -- Revert to dark grey
             end)
 
             Button.MouseButton1Click:Connect(function()
                 callback()
             end)
         end
-       	function TabFunctions:Toggle(title, value, callback)
+        function TabFunctions:Toggle(title, value, callback)
             local Toggle = Instance.new("TextButton")
             local UICorner = Instance.new("UICorner")
             local Title = Instance.new("TextLabel")
@@ -365,17 +365,17 @@ coroutine.wrap(GRIR_fake_script)()
 
             Toggle.Name = "Toggle"
             Toggle.Parent = Page
-            Toggle.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            Toggle.BackgroundColor3 = Color3.fromRGB(25, 25, 25) -- Dark grey background
             Toggle.Size = UDim2.new(1, -6, 0, 34)
             Toggle.AutoButtonColor = false
             Toggle.Font = Enum.Font.SourceSans
             Toggle.Text = ""
             Toggle.TextColor3 = Color3.fromRGB(0, 0, 0)
             Toggle.TextSize = 14.000
-            
+
             UICorner.CornerRadius = UDim.new(0, 6)
             UICorner.Parent = Toggle
-            
+
             Title.Name = "Title"
             Title.Parent = Toggle
             Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -384,19 +384,19 @@ coroutine.wrap(GRIR_fake_script)()
             Title.Size = UDim2.new(1, -6, 1, 0)
             Title.Font = Enum.Font.Gotham
             Title.Text = "Toggle"
-            Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Title.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
             Title.TextSize = 14.000
             Title.TextXAlignment = Enum.TextXAlignment.Left
-            
+
             Toggle_2.Name = "Toggle"
             Toggle_2.Parent = Toggle
             Toggle_2.AnchorPoint = Vector2.new(1, 0.5)
-            Toggle_2.BackgroundColor3 = Color3.fromRGB(161, 12, 59)
+            Toggle_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White background for check
             Toggle_2.BackgroundTransparency = 1.000
             Toggle_2.BorderSizePixel = 0
             Toggle_2.Position = UDim2.new(1, -8, 0.5, 0)
             Toggle_2.Size = UDim2.new(0, 14, 0, 14)
-            
+
             Checked.Name = "Checked"
             Checked.Parent = Toggle_2
             Checked.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -404,28 +404,30 @@ coroutine.wrap(GRIR_fake_script)()
             Checked.Position = UDim2.new(-0.214285731, 0, -0.214285731, 0)
             Checked.Size = UDim2.new(0, 20, 0, 20)
             Checked.Image = "http://www.roblox.com/asset/?id=7812909048"
+            Checked.ImageColor3 = Color3.fromRGB(0,0,0) -- Black checkmark
             Checked.ImageTransparency = 1
             Checked.ScaleType = Enum.ScaleType.Fit
-            
+
             Stroke.Parent = Toggle_2
             Stroke.LineJoinMode = Enum.LineJoinMode.Round
             Stroke.Thickness = 2
-            Stroke.Color = Color3.fromRGB(161, 12, 59)
+            Stroke.Color = Color3.fromRGB(255, 255, 255) -- White stroke
             Toggle.MouseEnter:Connect(function()
-                TweenService:Create(Toggle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}, true):Play()
+                TweenService:Create(Toggle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(45, 45, 45)}, true):Play()
             end)
-    
+
             Toggle.MouseLeave:Connect(function()
-                TweenService:Create(Toggle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundColor3 = Color3.fromRGB(35, 35, 35)}, true):Play()
+                TweenService:Create(Toggle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}, true):Play()
             end)
 
             local toggled = value
             if toggled then
             TweenService:Create(Toggle_2, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{BackgroundTransparency = 0}, true):Play()
+            TweenService:Create(Checked, TweenInfo.new(.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{ImageTransparency = 0}, true):Play()
                 callback(toggled)
             end
-            
-            
+
+
             Toggle.MouseButton1Click:Connect(function()
                 if toggled then  
                     toggled = false 
@@ -443,18 +445,18 @@ coroutine.wrap(GRIR_fake_script)()
         function TabFunctions:Label(labeltext)
             local TextLabel = Instance.new("TextLabel")
             local UICorner_6 = Instance.new("UICorner")
-            
+
             TextLabel.Parent = Page
-            TextLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            TextLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 25) -- Dark grey background
             TextLabel.BorderSizePixel = 0
             TextLabel.Position = UDim2.new(0.198795184, 0, 0.0214592274, 0)
             TextLabel.Size = UDim2.new(1, -6, 0, 34)
             TextLabel.Font = Enum.Font.Gotham
             TextLabel.Text = "  "..labeltext or "   Label" 
-            TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
             TextLabel.TextSize = 14.000
             TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-            
+
             UICorner_6.CornerRadius = UDim.new(0, 6)
             UICorner_6.Parent = TextLabel
         end
@@ -468,16 +470,16 @@ coroutine.wrap(GRIR_fake_script)()
             local SliderDrag = Instance.new("Frame")
             local UICorner_3 = Instance.new("UICorner")
             local Value = Instance.new("TextLabel")
-            
+
             Slider.Name = "Slider"
             Slider.Parent = Page
-            Slider.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            Slider.BackgroundColor3 = Color3.fromRGB(25, 25, 25) -- Dark grey background
             Slider.Position = UDim2.new(0, 0, 0.515021443, 0)
             Slider.Size = UDim2.new(1, -6, 0, 48)
-            
+
             UICorner.CornerRadius = UDim.new(0, 6)
             UICorner.Parent = Slider
-            
+
             Title.Name = "Title"
             Title.Parent = Slider
             Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -486,30 +488,30 @@ coroutine.wrap(GRIR_fake_script)()
             Title.Size = UDim2.new(1, -6, 0, 34)
             Title.Font = Enum.Font.Gotham
             Title.Text = title or "Slider"
-            Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Title.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
             Title.TextSize = 14.000
             Title.TextXAlignment = Enum.TextXAlignment.Left
-            
+
             SliderClick.Name = "SliderClick"
             SliderClick.Parent = Slider
             SliderClick.AnchorPoint = Vector2.new(0.5, 1)
-            SliderClick.BackgroundColor3 = Color3.fromRGB(52, 52, 52)
+            SliderClick.BackgroundColor3 = Color3.fromRGB(52, 52, 52) -- Lighter grey for slider track
             SliderClick.Position = UDim2.new(0.5, 0, 1, -8)
             SliderClick.Size = UDim2.new(1, -12, 0, 6)
             SliderClick.AutoButtonColor = false
             SliderClick.Text = ''
-            
+
             UICorner_2.CornerRadius = UDim.new(0, 6)
             UICorner_2.Parent = SliderClick
-            
+
             SliderDrag.Name = "SliderDrag"
             SliderDrag.Parent = SliderClick
-            SliderDrag.BackgroundColor3 = Color3.fromRGB(188, 14, 69)
+            SliderDrag.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- White drag part
             SliderDrag.Size = UDim2.new(0, 120, 1, 0)
-            
+
             UICorner_3.CornerRadius = UDim.new(0, 6)
             UICorner_3.Parent = SliderDrag
-            
+
             Value.Name = "Value"
             Value.Parent = Slider
             Value.AnchorPoint = Vector2.new(1, 0)
@@ -519,12 +521,12 @@ coroutine.wrap(GRIR_fake_script)()
             Value.Size = UDim2.new(1, 0, 0, 34)
             Value.Font = Enum.Font.Gotham
             Value.Text = tostring(def)
-            Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Value.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
             Value.TextSize = 14.000
             Value.TextXAlignment = Enum.TextXAlignment.Right
 
             callback = callback or function() end
-    
+
             local function slide(input)
                 local pos =
                     UDim2.new(
@@ -534,20 +536,20 @@ coroutine.wrap(GRIR_fake_script)()
                         Value.Text = tostring(s)
                         callback(s)
                     end
-    
+
                 SliderClick.InputBegan:Connect(function(input) 
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     slide(input)
                     dragging = true
                 end
             end) 
-    
+
             SliderClick.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging = false
                 end
             end)
-    
+
             UserInputService.InputChanged:Connect(function(input)
                 if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
                     slide(input)
@@ -566,17 +568,17 @@ coroutine.wrap(GRIR_fake_script)()
 
             KeyBind.Name = "KeyBind"
             KeyBind.Parent = Page
-            KeyBind.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            KeyBind.BackgroundColor3 = Color3.fromRGB(25, 25, 25) -- Dark grey background
             KeyBind.Size = UDim2.new(1, -6, 0, 34)
             KeyBind.AutoButtonColor = false
             KeyBind.Font = Enum.Font.SourceSans
             KeyBind.Text = ""
             KeyBind.TextColor3 = Color3.fromRGB(0, 0, 0)
             KeyBind.TextSize = 14.000
-            
+
             UICorner_7.CornerRadius = UDim.new(0, 6)
             UICorner_7.Parent = KeyBind
-            
+
             Title.Name = "Title"
             Title.Parent = KeyBind
             Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -585,21 +587,21 @@ coroutine.wrap(GRIR_fake_script)()
             Title.Size = UDim2.new(1, -6, 1, 0)
             Title.Font = Enum.Font.Gotham
             Title.Text = text or "KeyBind"
-            Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Title.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
             Title.TextSize = 14.000
             Title.TextXAlignment = Enum.TextXAlignment.Left
-            
+
             CurrentKey.Name = "CurrentKey"
             CurrentKey.Parent = KeyBind
             CurrentKey.AnchorPoint = Vector2.new(1, 0.5)
-            CurrentKey.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            CurrentKey.BackgroundColor3 = Color3.fromRGB(45, 45, 45) -- Lighter grey for key display
             CurrentKey.Position = UDim2.new(1, -6, 0.5, 0)
             CurrentKey.Size = UDim2.new(-0, 46, 0, 24)
             CurrentKey.Font = Enum.Font.Gotham
             CurrentKey.Text = Key or ". . ."
-            CurrentKey.TextColor3 = Color3.fromRGB(255, 255, 255)
+            CurrentKey.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
             CurrentKey.TextSize = 14.000
-            
+
             UICorner_8.CornerRadius = UDim.new(0, 4)
             UICorner_8.Parent = CurrentKey
 
@@ -611,7 +613,7 @@ coroutine.wrap(GRIR_fake_script)()
                     Key = a.KeyCode.Name;
                 end
             end)
-            
+
 
             game:GetService("UserInputService").InputBegan:connect(function(current, ok) 
                 if not ok then 
@@ -649,14 +651,14 @@ coroutine.wrap(GRIR_fake_script)()
                 UIListLayout_69.HorizontalAlignment = Enum.HorizontalAlignment.Center
                 UIListLayout_69.SortOrder = Enum.SortOrder.LayoutOrder
                 UIListLayout_69.Padding = UDim.new(0, 5)
-                
+
                 local dropped = false
                 Choose.Name = "Choose"
                 Choose.Parent = Dropdown
-                Choose.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+                Choose.BackgroundColor3 = Color3.fromRGB(25, 25, 25) -- Dark grey background
                 Choose.BorderSizePixel = 0
                 Choose.Size = UDim2.new(1, 0, 0, 34)
-                
+
 
                 UICorner.CornerRadius = UDim.new(0, 6)
                 UICorner.Parent = Choose
@@ -669,7 +671,7 @@ coroutine.wrap(GRIR_fake_script)()
                 Title.Size = UDim2.new(1, -6, 1, 0)
                 Title.Font = Enum.Font.Gotham
                 Title.Text = title or "Dropdowm"
-                Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+                Title.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
                 Title.TextSize = 14.000
                 Title.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -682,16 +684,16 @@ coroutine.wrap(GRIR_fake_script)()
                 arrow.Size = UDim2.new(0, 28, 0, 28)
                 arrow.ZIndex = 2
                 arrow.Image = "rbxassetid://3926307971"
-                arrow.ImageColor3 = Color3.fromRGB(161, 12, 59)
+                arrow.ImageColor3 = Color3.fromRGB(255, 255, 255) -- White arrow
                 arrow.ImageRectOffset = Vector2.new(324, 524)
                 arrow.ImageRectSize = Vector2.new(36, 36)
                 arrow.ScaleType = Enum.ScaleType.Crop
-                
-                
+
+
 
                 OptionHolder.Name = "OptionHolder"
                 OptionHolder.Parent = Dropdown
-                OptionHolder.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+                OptionHolder.BackgroundColor3 = Color3.fromRGB(25, 25, 25) -- Dark grey background for options
                 OptionHolder.BorderSizePixel = 0
                 OptionHolder.Size = UDim2.new(1, 0, 1, -38)
 
@@ -706,13 +708,13 @@ coroutine.wrap(GRIR_fake_script)()
 
                 UIPadding.Parent = OptionHolder
                 UIPadding.PaddingTop = UDim.new(0, 8)
-                
+
                 Choose.InputBegan:Connect(function(inp)
                     if inp.UserInputType == Enum.UserInputType.MouseButton1 then 
                         if not dropped then
                             Dropdown:TweenSize(UDim2.new(1, -7,0, UIListLayout_69.AbsoluteContentSize.Y), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, .15, true)
                             TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 180}, true):Play()
-			    dropped = true
+                dropped = true
                         else
                             TweenService:Create(arrow, TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0}, true):Play()
                             Dropdown:TweenSize(UDim2.new(1, -7,0, 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, .12)
@@ -720,20 +722,20 @@ coroutine.wrap(GRIR_fake_script)()
                         end
                     end
                 end)
-                
+
                 for i,v in next, list do
                     local Option = Instance.new("TextButton")
                     local UICorner = Instance.new("UICorner")
 
                     Option.Name = "Option"
                     Option.Parent = OptionHolder
-                    Option.BackgroundColor3 = Color3.fromRGB(134, 10, 49)
+                    Option.BackgroundColor3 = Color3.fromRGB(45, 45, 45) -- Lighter grey for options
                     Option.BorderSizePixel = 0
                     Option.Size = UDim2.new(1, -16, 0, 30)
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = v
-                    Option.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    Option.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
                     Option.TextSize = 14.000
 
                     UICorner.CornerRadius = UDim.new(0, 6)
@@ -748,7 +750,7 @@ coroutine.wrap(GRIR_fake_script)()
                     end)
                     OptionHolder:TweenSize(UDim2.new(1, 0, 0, OptionList.AbsoluteContentSize.Y + 15), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .15, true)
                 end 
-                
+
                 local DropdownFunc = {}
                 function DropdownFunc:RefreshDropdown(newlist)
                 dropped = false
@@ -761,20 +763,20 @@ coroutine.wrap(GRIR_fake_script)()
                         v:Destroy()
                     end
                 end
-                
+
                 for i,v in next, newlist do
                     local Option = Instance.new("TextButton")
                     local UICorner = Instance.new("UICorner")
 
                     Option.Name = "Option"
                     Option.Parent = OptionHolder
-                    Option.BackgroundColor3 = Color3.fromRGB(134, 10, 49)
+                    Option.BackgroundColor3 = Color3.fromRGB(45, 45, 45) -- Lighter grey for options
                     Option.BorderSizePixel = 0
                     Option.Size = UDim2.new(1, -16, 0, 30)
                     Option.AutoButtonColor = false
                     Option.Font = Enum.Font.Gotham
                     Option.Text = v
-                    Option.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    Option.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
                     Option.TextSize = 14.000
 
                     UICorner.CornerRadius = UDim.new(0, 6)
@@ -798,4 +800,3 @@ coroutine.wrap(GRIR_fake_script)()
     return Tabs
 end
 return Library
- 
