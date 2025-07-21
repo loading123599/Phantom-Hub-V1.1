@@ -1,3 +1,8 @@
+--[[
+    PhantomHubV2 - Mobile Optimized UI Library
+    With Custom Logo (Decal ID: 85666553009593)
+--]]
+
 -- Clean up any existing PhantomHub instances
 pcall(function()
     game:GetService('CoreGui'):FindFirstChild('PhantomHubV2'):Remove()
@@ -7,36 +12,6 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
--- =================================================================
--- [[ SCRIPT FIX V2 (Bypass) STARTS HERE ]]
--- The error "'SendLikelySpeakingUsers' RemoteEvent not found" means the
--- server isn't creating the event. This bypass will create a dummy event
--- on the client to silence the error.
--- NOTE: For full functionality, use the server-side fix (Solution 1).
--- =================================================================
-
-local sendLikelySpeakingUsersEvent = ReplicatedStorage:FindFirstChild("SendLikelySpeakingUsers")
-
--- If the event is not found, create a dummy one on the client
-if not sendLikelySpeakingUsersEvent then
-    print("Warning: 'SendLikelySpeakingUsers' not found. Creating a dummy event to prevent errors.")
-    sendLikelySpeakingUsersEvent = Instance.new("RemoteEvent")
-    sendLikelySpeakingUsersEvent.Name = "SendLikelySpeakingUsers"
-    sendLikelySpeakingUsersEvent.Parent = ReplicatedStorage
-end
-
--- Now connect to the event (either the real one or the dummy one).
--- This will prevent the "invocation discarded" error.
-sendLikelySpeakingUsersEvent.OnClientEvent:Connect(function(...)
-    print("Successfully handled 'SendLikelySpeakingUsers' event.")
-end)
-
--- =================================================================
--- [[ SCRIPT FIX V2 (Bypass) ENDS HERE ]]
--- Your original UI library code continues below.
--- =================================================================
 
 local Library = {}
 
@@ -66,11 +41,11 @@ function Library:Window(title)
     local Resize = Instance.new("ImageButton")
     local Cover = Instance.new("Frame")
     local MobileToggle = Instance.new("ImageButton")
-
+    
     -- Mobile detection
     local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-
-    ui.Name = "Phantom Hub V2"
+    
+    ui.Name = "PhantomHubV2"
     ui.Parent = game.CoreGui
     ui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ui.ResetOnSpawn = false
@@ -100,13 +75,13 @@ function Library:Window(title)
     Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
     Shadow.Size = UDim2.new(1, 30, 1, 30)
     Shadow.ZIndex = 0
-    Shadow.Image = "rbxassetid://134197284722372"
+    Shadow.Image = "rbxassetid://5554236805"
     Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
     Shadow.ScaleType = Enum.ScaleType.Slice
     Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
 
     local sidebarVisible = true
-
+    
     tabs.Name = "tabs"
     tabs.Parent = Main
     tabs.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
@@ -158,21 +133,21 @@ function Library:Window(title)
     Logo.BackgroundTransparency = 0.000
     Logo.Position = UDim2.new(0, 4, 0.5, 0)
     Logo.Size = UDim2.new(0, 26, 0, 26)
-
+    
     -- Try to load your custom decal
     local logoLoaded = false
     pcall(function()
-        Logo.Image = "rbxassetid://134197284722372"
+        Logo.Image = "rbxassetid://85666553009593"
         Logo.ImageColor3 = Color3.fromRGB(255, 255, 255)
         logoLoaded = true
         print("✅ Custom logo loaded successfully!")
     end)
-
+    
     -- Add corner radius to logo
     local LogoCorner = Instance.new("UICorner")
     LogoCorner.CornerRadius = UDim.new(0, 6)
     LogoCorner.Parent = Logo
-
+    
     -- Fallback if logo fails to load
     if not logoLoaded then
         local LogoText = Instance.new("TextLabel")
@@ -201,13 +176,13 @@ function Library:Window(title)
         MobileToggle.ImageColor3 = Color3.fromRGB(138, 43, 226)
         MobileToggle.ImageRectOffset = Vector2.new(4, 4)
         MobileToggle.ImageRectSize = Vector2.new(36, 36)
-
+        
         MobileToggle.MouseButton1Click:Connect(function()
             sidebarVisible = not sidebarVisible
             local targetSize = sidebarVisible and UDim2.new(0, 100, 1, -35) or UDim2.new(0, 0, 1, -35)
             local targetPagesPos = sidebarVisible and UDim2.new(0, 108, 0, 42) or UDim2.new(0, 8, 0, 42)
             local targetPagesSize = sidebarVisible and UDim2.new(1, -116, 1, -50) or UDim2.new(1, -16, 1, -50)
-
+            
             TweenService:Create(tabs, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize}):Play()
             TweenService:Create(Pages, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = targetPagesPos, Size = targetPagesSize}):Play()
             TweenService:Create(MobileToggle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = sidebarVisible and 0 or 180}):Play()
@@ -224,15 +199,15 @@ function Library:Window(title)
     Close.Image = "http://www.roblox.com/asset/?id=7755372427"
     Close.ImageColor3 = Color3.fromRGB(199, 199, 199)
     Close.ScaleType = Enum.ScaleType.Crop
-
+    
     Close.MouseButton1Click:Connect(function()
         ui:Destroy()
     end)
-
+    
     Close.MouseEnter:Connect(function()
         TweenService:Create(Close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255,255,255)}):Play()
     end)
-
+    
     Close.MouseLeave:Connect(function()
         TweenService:Create(Close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(166, 166, 166)}):Play()
     end)
@@ -286,7 +261,7 @@ function Library:Window(title)
 
     UIPadding.Parent = TabsContainer
     UIPadding.PaddingTop = UDim.new(0, 5)
-
+    
     UICorner.CornerRadius = UDim.new(0, 8)
     UICorner.Parent = tabs
 
@@ -303,28 +278,28 @@ function Library:Window(title)
         local function setupResize()
             local mouse = Players.LocalPlayer:GetMouse()
             local input = UserInputService
-
+            
             local locationX = input:GetMouseLocation().X
             local locationY = input:GetMouseLocation().Y
-
+            
             local defaultX = 470
             local defaultY = 283
-
+            
             Resize.MouseButton1Down:Connect(function()
                 locationX = input:GetMouseLocation().X
                 locationY = input:GetMouseLocation().Y
                 local moveConnection
                 local releaseConnection
-
+                
                 moveConnection = mouse.Move:Connect(function()
                     local DeltaX = input:GetMouseLocation().X - locationX
                     local DeltaY = input:GetMouseLocation().Y - locationY
-
+                    
                     Main.Size = Main.Size + UDim2.new(0, DeltaX, 0, DeltaY)
                     locationX = input:GetMouseLocation().X
                     locationY = input:GetMouseLocation().Y
                 end)
-
+                
                 releaseConnection = input.InputEnded:Connect(function(inp)
                     if inp.UserInputType == Enum.UserInputType.MouseButton1 then
                         moveConnection:Disconnect()
@@ -332,7 +307,7 @@ function Library:Window(title)
                     end
                 end)
             end)
-
+            
             Main.Changed:Connect(function()
                 if Main.Size.X.Offset < defaultX then
                     Main.Size = UDim2.new(0, defaultX, 0, Main.Size.Y.Offset)
@@ -342,7 +317,7 @@ function Library:Window(title)
                 end
             end)
         end
-
+        
         coroutine.wrap(setupResize)()
     end
 
@@ -352,13 +327,13 @@ function Library:Window(title)
             local viewportSize = workspace.CurrentCamera.ViewportSize
             local newSize = UDim2.new(0, math.min(400, viewportSize.X * 0.9), 0, math.min(300, viewportSize.Y * 0.7))
             local newPosition = UDim2.new(0.5, -newSize.X.Offset/2, 0.5, -newSize.Y.Offset/2)
-
+            
             TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                 Size = newSize,
                 Position = newPosition
             }):Play()
         end
-
+        
         workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(handleOrientationChange)
     end
 
@@ -430,7 +405,7 @@ function Library:Window(title)
         end)
 
         local TabFunctions = {}
-
+        
         function TabFunctions:Button(title, callback)
             callback = callback or function() end
             local Button = Instance.new("TextButton")
@@ -526,7 +501,7 @@ function Library:Window(title)
             Stroke.LineJoinMode = Enum.LineJoinMode.Round
             Stroke.Thickness = 2
             Stroke.Color = Color3.fromRGB(138, 43, 226)
-
+            
             Toggle.MouseEnter:Connect(function()
                 TweenService:Create(Toggle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
             end)
@@ -871,7 +846,7 @@ function Library:Window(title)
                     Dropdown:TweenSize(UDim2.new(1, -5, 0, isMobile and 38 or 34), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .15, true)
                     Title.Text = title .. ": " .. v
                 end)
-
+                
                 OptionHolder:TweenSize(UDim2.new(1, 0, 0, OptionList.AbsoluteContentSize.Y + 15), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .15, true)
             end
 
