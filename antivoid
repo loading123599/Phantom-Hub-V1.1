@@ -1,0 +1,39 @@
+function CreatePlatform(Adjustment)
+	local PltInstance = workspace:FindFirstChild("PlatformFolder_" .. Player.UserId)
+	if PltInstance then
+		PltInstance:Destroy()
+	end
+	local character = Player.Character
+	local hrp = character:WaitForChild("HumanoidRootPart")
+	local center, size = character:GetBoundingBox()
+	local offset = hrp.Position.Y - (center.Y - size.Y/2)
+	local extra = 0.1
+	local yPos = hrp.Position.Y - offset - (3/2) - extra
+	if Adjustment ~= nil then
+		if not tonumber(Adjustment) then
+			Adjustment = 0
+		end
+		yPos += tonumber(Adjustment)
+	end
+	local folder = Instance.new("Folder", workspace)
+	folder.Name = "PlatformFolder_" .. Player.UserId
+	local parts = {}
+	for dx = -1, 1 do
+		for dz = -1, 1 do
+			local p = Instance.new("Part")
+			p.Size = Vector3.new(2048, 3, 2048)
+			p.Anchored = true
+			p.CanCollide = true
+			
+			-- Directly set the properties for a transparent platform
+			p.Transparency = 1
+			p.Material = Enum.Material.ForceField
+			p.Color = Color3.fromRGB(152, 67, 255)
+			
+			p.CastShadow = false
+			p.Position = Vector3.new(hrp.Position.X + dx * 2048, yPos, hrp.Position.Z + dz * 2048)
+			p.Parent = folder
+			table.insert(parts, p)
+		end
+	end
+end
