@@ -68,8 +68,8 @@ local RankData = {
     }
 }
 
-local Kyri = { "" }
-local Alex = { "GoodHelper12345" }
+local Kyri = { "GoodHelper12345" }
+local Alex = { "nither114" }
 local ServerBoosters = { "" }
 local KyrisWife = { "" }
 local AlexsWife = { "" }
